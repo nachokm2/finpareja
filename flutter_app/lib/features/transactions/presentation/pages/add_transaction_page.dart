@@ -1,0 +1,295 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_app/core/theme/app_theme.dart';
+import 'package:flutter_app/core/utils/currency_formatter.dart';
+import 'package:flutter_app/features/categories/domain/entities/category_entity.dart';
+import 'package:flutter_app/features/categories/presentation/providers/categories_provider.dart';
+import 'package:flutter_app/features/transactions/presentation/providers/transactions_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+class AddTransactionPage extends ConsumerStatefulWidget {
+  const AddTransactionPage({super.key});
+
+  @override
+  ConsumerState<AddTransactionPage> createState() =>
+      _AddTransactionPageState();
+}
+
+class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
+  String _tipo = 'gasto';
+  String _monto = '0';
+  String? _descripcion;
+  CategoryEntity? _selectedCategory;
+  final DateTime _fecha = DateTime.now();
+  bool _saving = false;
+
+  void _appendDigit(String digit) {
+    setState(() {
+      if (_monto == '0') {
+        _monto = digit;
+      } else {
+        _monto = _monto + digit;
+      }
+    });
+  }
+
+  void _backspace() {
+    setState(() {
+      if (_monto.length <= 1) {
+        _monto = '0';
+      } else {
+        _monto = _monto.substring(0, _monto.length - 1);
+      }
+    });
+  }
+
+  Future<void> _save() async {
+    final amount = double.tryParse(_monto) ?? 0;
+    if (amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ingresa un monto valido')),
+      );
+      return;
+    }
+    setState(() => _saving = true);
+    final ok = await ref.read(transactionsProvider.notifier).create(
+          tipo: _tipo,
+          monto: amount,
+          fecha: _fecha,
+          descripcion: _descripcion,
+          categoriaId: _selectedCategory?.id,
+        );
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (ok) {
+      context.pop();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al guardar. Intenta de nuevo.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isGasto = _tipo == 'gasto';
+    final amount = double.tryParse(_monto) ?? 0;
+    final categoriesAsync = isGasto
+        ? ref.watch(gastoCategoriesProvider)
+        : ref.watch(ingresoCategoriesProvider);
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text('Nueva transaccion'),
+        actions: [
+          if (_saving)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else
+            TextButton(
+              onPressed: _save,
+              child: const Text(
+                'Guardar',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Tipo toggle
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(color: AppColors.cardShadow, blurRadius: 8),
+                ],
+              ),
+              child: Row(
+                children: ['gasto', 'ingreso'].map((tipo) {
+                  final selected = _tipo == tipo;
+                  final color = tipo == 'gasto'
+                      ? const Color(0xFFEF4444)
+                      : AppColors.success;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() {
+                        _tipo = tipo;
+                        _selectedCategory = null;
+                      }),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: selected ? color : Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          tipo == 'gasto' ? 'Gasto' : 'Ingreso',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: selected ? Colors.white : Colors.grey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+
+          // Monto
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              CurrencyFormatter.format(amount),
+              style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: isGasto
+                        ? const Color(0xFFEF4444)
+                        : AppColors.success,
+                  ),
+            ),
+          ),
+
+          // Categorias
+          SizedBox(
+            height: 80,
+            child: categoriesAsync.when(
+              loading: () =>
+                  const Center(child: CircularProgressIndicator()),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (categories) => ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final cat = categories[index];
+                  final selected = _selectedCategory?.id == cat.id;
+                  return GestureDetector(
+                    onTap: () => setState(
+                      () => _selectedCategory = selected ? null : cat,
+                    ),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selected ? AppColors.primary : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: selected
+                              ? AppColors.primary
+                              : Colors.grey.shade200,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            cat.icono ?? '📦',
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            cat.nombre,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: selected
+                                  ? Colors.white
+                                  : Colors.grey[600],
+                              fontWeight: selected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+
+          // Descripcion
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Descripcion (opcional)',
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onChanged: (v) => _descripcion = v.isEmpty ? null : v,
+            ),
+          ),
+
+          const Spacer(),
+
+          // Teclado numerico
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              children: [
+                _buildKeyRow(['1', '2', '3']),
+                _buildKeyRow(['4', '5', '6']),
+                _buildKeyRow(['7', '8', '9']),
+                _buildKeyRow(['000', '0', '⌫']),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKeyRow(List<String> keys) {
+    return Row(
+      children: keys.map((key) {
+        return Expanded(
+          child: GestureDetector(
+            onTap: () => key == '⌫' ? _backspace() : _appendDigit(key),
+            child: Container(
+              height: 60,
+              margin: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  key,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}

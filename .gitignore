@@ -1,0 +1,31 @@
+# ── Secretos (NUNCA al repo) ──────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# ── Python / backend ──────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── Flutter / Dart (refuerzo del .gitignore de flutter_app/) ──────────────
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.lock.bak
+
+# ── IDE / SO ──────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

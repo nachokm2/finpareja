@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Secretos y entorno local — NUNCA al contenedor
+.env
+.env.*
+!.env.example
+
+# Control de versiones / IDE
+.git/
+.gitignore
+.idea/
+.vscode/
+
+# Documentación (no necesaria en runtime)
+README.md
+
+# SO
+.DS_Store
+Thumbs.db

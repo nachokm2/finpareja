@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Backend: instala deps y verifica que la app importa sin errores ─────────
+  backend:
+    name: Backend (FastAPI)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Compilar (sintaxis)
+        run: python -m compileall app
+
+      - name: Verificar que la app importa
+        env:
+          # Valores dummy: el import no debe requerir DB real.
+          DATABASE_URL: postgresql+asyncpg://u:p@localhost:5432/db
+          SECRET_KEY: ci_dummy_secret
+          APP_ENV: ci
+        run: python -c "import app.main; print('app.main OK')"
+
+  # ── Frontend: formato + análisis estático de Flutter ────────────────────────
+  flutter:
+    name: Frontend (Flutter)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter_app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Analizar (no fallar por sugerencias info)
+        run: flutter analyze --no-fatal-infos

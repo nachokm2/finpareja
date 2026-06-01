@@ -1,0 +1,26 @@
+import 'package:flutter_app/core/errors/failures.dart';
+import 'package:flutter_app/features/transactions/domain/entities/transaction_entity.dart';
+import 'package:fpdart/fpdart.dart';
+
+abstract class TransactionRepository {
+  Future<Either<Failure, List<TransactionEntity>>> getTransactions({
+    int page = 1,
+    int pageSize = 30,
+    String? tipo,
+    int? mes,
+    int? anio,
+  });
+
+  Future<Either<Failure, TransactionEntity>> createTransaction({
+    required String tipo,
+    required double monto,
+    required DateTime fecha,
+    String? descripcion,
+    int? categoriaId,
+    bool esCompartido = false,
+    String moneda = 'CLP',
+    String? notas,
+  });
+
+  Future<Either<Failure, void>> deleteTransaction(int id);
+}
