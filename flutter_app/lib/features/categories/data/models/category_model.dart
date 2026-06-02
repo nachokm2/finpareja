@@ -14,8 +14,10 @@ class CategoryModel extends CategoryEntity {
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) => CategoryModel(
         id: json['id'] as int,
-        nombre: json['nombre'] as String,
-        tipo: json['tipo'] as String,
+        nombre: json['nombre'] as String? ?? '',
+        // La categoría embebida en una transacción solo trae id/nombre/icono/color,
+        // sin 'tipo' ni 'es_sistema' → fallback para no crashear.
+        tipo: json['tipo'] as String? ?? 'gasto',
         esSistema: json['es_sistema'] as bool? ?? false,
         icono: json['icono'] as String?,
         color: json['color'] as String?,
