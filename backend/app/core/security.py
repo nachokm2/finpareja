@@ -2,18 +2,27 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# bcrypt opera sobre bytes y trunca en 72 bytes; codificamos en una sola función.
+_BCRYPT_MAX_BYTES = 72
+
+
+def _to_bcrypt_bytes(password: str) -> bytes:
+    return password.encode("utf-8")[:_BCRYPT_MAX_BYTES]
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    hashed = bcrypt.hashpw(_to_bcrypt_bytes(password), bcrypt.gensalt())
+    return hashed.decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(_to_bcrypt_bytes(plain), hashed.encode("utf-8"))
+    except (ValueError, TypeError):
+        return False
 
 
 def create_access_token(
