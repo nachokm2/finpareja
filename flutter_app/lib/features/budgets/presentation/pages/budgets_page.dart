@@ -59,23 +59,29 @@ class BudgetsPage extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      // Limita el alto al 85% de la pantalla para que el SingleChildScrollView
-      // tenga un área fija dentro de la cual desplazarse.
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => const _CreateBudgetSheet(),
+      // DraggableScrollableSheet gestiona su propia altura y entrega un
+      // ScrollController; eso garantiza que el contenido sea desplazable.
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        minChildSize: 0.4,
+        maxChildSize: 0.95,
+        builder: (_, scrollController) =>
+            _CreateBudgetSheet(scrollController: scrollController),
+      ),
     );
   }
 }
 
 /// Bottom sheet para crear un presupuesto: elige categoría de gasto + monto.
 class _CreateBudgetSheet extends ConsumerStatefulWidget {
-  const _CreateBudgetSheet();
+  const _CreateBudgetSheet({required this.scrollController});
+
+  final ScrollController scrollController;
 
   @override
   ConsumerState<_CreateBudgetSheet> createState() => _CreateBudgetSheetState();
@@ -116,6 +122,7 @@ class _CreateBudgetSheetState extends ConsumerState<_CreateBudgetSheet> {
     final categoriesAsync = ref.watch(gastoCategoriesProvider);
 
     return SingleChildScrollView(
+      controller: widget.scrollController,
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom +
             MediaQuery.of(context).viewPadding.bottom +

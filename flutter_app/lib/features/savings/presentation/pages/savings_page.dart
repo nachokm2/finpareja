@@ -57,22 +57,27 @@ class SavingsPage extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      // Limita el alto al 85% para que el contenido sea scrollable.
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => const _CreateGoalSheet(),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        minChildSize: 0.4,
+        maxChildSize: 0.95,
+        builder: (_, scrollController) =>
+            _CreateGoalSheet(scrollController: scrollController),
+      ),
     );
   }
 }
 
 /// Bottom sheet para crear una meta de ahorro: nombre, emoji y monto objetivo.
 class _CreateGoalSheet extends ConsumerStatefulWidget {
-  const _CreateGoalSheet();
+  const _CreateGoalSheet({required this.scrollController});
+
+  final ScrollController scrollController;
 
   @override
   ConsumerState<_CreateGoalSheet> createState() => _CreateGoalSheetState();
@@ -117,6 +122,7 @@ class _CreateGoalSheetState extends ConsumerState<_CreateGoalSheet> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      controller: widget.scrollController,
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom +
             MediaQuery.of(context).viewPadding.bottom +
