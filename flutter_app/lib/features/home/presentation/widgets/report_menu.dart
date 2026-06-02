@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_app/features/home/domain/entities/user_role.dart';
-import 'package:flutter_app/features/home/presentation/pages/report_view_page.dart';
 
 class ReportDefinition {
   const ReportDefinition({
@@ -78,20 +77,10 @@ class ReportMenu extends StatelessWidget {
   final UserRole role;
 
   void _onTap(BuildContext context, ReportDefinition report) {
-    if (report.reportUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reporte en configuración')),
-      );
-      return;
-    }
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ReportViewPage(
-          title: report.title,
-          reportUrl: report.reportUrl!,
-        ),
-      ),
+    // Los reportes embebidos (Looker Studio) se retiraron al migrar a FinPareja.
+    // El módulo de reportes financieros vive en /reportes (fl_chart).
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Reporte en configuración')),
     );
   }
 

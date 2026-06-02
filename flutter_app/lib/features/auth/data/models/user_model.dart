@@ -23,10 +23,12 @@ class UserModel extends User {
     return UserModel(
       id: json['id'] as int,
       email: json['email'] as String,
-      isActive: json['is_active'] as bool,
-      fullName: json['full_name'] as String,
-      phoneNumber: json['phone_number'] as String,
-      avatarUrl: (json['avatar_url'] ?? '') as String,
+      isActive: json['is_active'] as bool? ?? true,
+      fullName: json['full_name'] as String? ?? '',
+      // phone_number y avatar_url son null en el backend si no se registraron;
+      // la entidad User los espera como String no-nulo → fallback a ''.
+      phoneNumber: json['phone_number'] as String? ?? '',
+      avatarUrl: json['avatar_url'] as String? ?? '',
       roles: roles,
     );
   }
