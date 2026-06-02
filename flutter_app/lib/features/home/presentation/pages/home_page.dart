@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_app/features/auth/presentation/notifiers/auth_notifier.dart';
-import 'package:flutter_app/features/home/domain/entities/user_role.dart';
 import 'package:flutter_app/features/home/presentation/mappers/profile_view_data.dart';
 import 'package:flutter_app/features/home/presentation/providers/profile_provider.dart';
 import 'package:flutter_app/features/home/presentation/widgets/contact_card.dart';
 import 'package:flutter_app/features/home/presentation/widgets/profile_card.dart';
-import 'package:flutter_app/features/home/presentation/widgets/role_toggle.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HomePage extends ConsumerWidget {
@@ -80,31 +78,10 @@ class _ProfileError extends StatelessWidget {
   }
 }
 
-class _ProfileBody extends StatefulWidget {
+class _ProfileBody extends StatelessWidget {
   const _ProfileBody({required this.data});
 
   final ProfileViewData data;
-
-  @override
-  State<_ProfileBody> createState() => _ProfileBodyState();
-}
-
-class _ProfileBodyState extends State<_ProfileBody> {
-  late UserRole _selectedRole;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedRole = widget.data.primaryRole;
-  }
-
-  @override
-  void didUpdateWidget(covariant _ProfileBody oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.data.primaryRole != widget.data.primaryRole) {
-      _selectedRole = widget.data.primaryRole;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -113,17 +90,9 @@ class _ProfileBodyState extends State<_ProfileBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ProfileCard(data: widget.data, role: _selectedRole),
+          ProfileCard(data: data),
           const SizedBox(height: 16),
-          if (widget.data.availableRoles.length > 1) ...[
-            RoleToggle(
-              roles: widget.data.availableRoles,
-              selectedRole: _selectedRole,
-              onRoleSelected: (role) => setState(() => _selectedRole = role),
-            ),
-            const SizedBox(height: 16),
-          ],
-          ContactCard(data: widget.data),
+          ContactCard(data: data),
         ],
       ),
     );
