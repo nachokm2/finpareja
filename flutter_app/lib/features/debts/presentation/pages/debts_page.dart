@@ -73,7 +73,8 @@ class DebtsPage extends ConsumerWidget {
       ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom +
+              MediaQuery.of(ctx).viewPadding.bottom,
           left: 20,
           right: 20,
           top: 20,
@@ -272,7 +273,8 @@ class _DebtCard extends StatelessWidget {
       ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom +
+              MediaQuery.of(ctx).viewPadding.bottom,
           left: 20,
           right: 20,
           top: 20,

@@ -131,7 +131,13 @@ class _GoalCard extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 16, right: 16, top: 16),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom +
+              MediaQuery.of(ctx).viewPadding.bottom,
+          left: 16,
+          right: 16,
+          top: 16,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
