@@ -16,12 +16,16 @@ class SavingsPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Metas de ahorro')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreate(context),
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Nueva meta', style: TextStyle(color: Colors.white)),
+      appBar: AppBar(
+        title: const Text('Metas de ahorro'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle, color: AppColors.primary),
+            iconSize: 30,
+            tooltip: 'Nueva meta',
+            onPressed: () => _showCreate(context),
+          ),
+        ],
       ),
       body: goalsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),

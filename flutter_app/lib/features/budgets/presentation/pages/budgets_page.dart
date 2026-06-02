@@ -18,12 +18,16 @@ class BudgetsPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Presupuestos')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreate(context, ref),
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Nuevo', style: TextStyle(color: Colors.white)),
+      appBar: AppBar(
+        title: const Text('Presupuestos'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle, color: AppColors.primary),
+            iconSize: 30,
+            tooltip: 'Nuevo presupuesto',
+            onPressed: () => _showCreate(context, ref),
+          ),
+        ],
       ),
       body: budgetsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
