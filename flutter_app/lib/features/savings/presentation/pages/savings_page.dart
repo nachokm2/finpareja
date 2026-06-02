@@ -112,10 +112,11 @@ class _CreateGoalSheetState extends ConsumerState<_CreateGoalSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom +
-            MediaQuery.of(context).viewPadding.bottom,
+            MediaQuery.of(context).viewPadding.bottom +
+            20,
         left: 20,
         right: 20,
         top: 20,

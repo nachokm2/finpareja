@@ -110,10 +110,11 @@ class _CreateBudgetSheetState extends ConsumerState<_CreateBudgetSheet> {
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(gastoCategoriesProvider);
 
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom +
-            MediaQuery.of(context).viewPadding.bottom,
+            MediaQuery.of(context).viewPadding.bottom +
+            20,
         left: 20,
         right: 20,
         top: 20,
