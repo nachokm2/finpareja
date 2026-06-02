@@ -246,10 +246,17 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
 
           const Spacer(),
 
-          // Teclado numerico
+          // Teclado numerico.
+          // El padding inferior suma el alto de la barra de navegación del
+          // sistema (viewPadding.bottom) para que las teclas no queden debajo.
           Container(
             color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              8,
+              16,
+              16 + MediaQuery.of(context).viewPadding.bottom,
+            ),
             child: Column(
               children: [
                 _buildKeyRow(['1', '2', '3']),
