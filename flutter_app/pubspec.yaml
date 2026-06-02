@@ -27,3 +27,8 @@ dev_dependencies:
   build_runner: ^2.4.0
   json_serializable: ^6.7.0
   flutter_lints: ^4.0.0
+
+flutter:
+  # Empaqueta la fuente MaterialIcons (Icons.*). Sin esto los íconos
+  # del navbar y toda la app salen como cajas/(X) en el build release.
+  uses-material-design: true
