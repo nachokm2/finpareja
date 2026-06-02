@@ -1,3 +1,5 @@
+import json
+import warnings
 from functools import lru_cache
 
 from pydantic import field_validator
@@ -26,37 +28,40 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 30
 
-    # CORS — acepta "*", CSV ("https://a.com,https://b.com") o JSON (["..."]).
-    # Railway entrega las env vars como strings, así que normalizamos a lista.
-    allowed_origins: list[str] = ["*"]
-
-    @field_validator("allowed_origins", mode="before")
-    @classmethod
-    def _parse_origins(cls, value: object) -> list[str]:
-        if isinstance(value, str):
-            stripped = value.strip()
-            if stripped.startswith("["):
-                import json
-                try:
-                    return [str(o) for o in json.loads(stripped)]
-                except (ValueError, TypeError):
-                    pass
-            return [o.strip() for o in stripped.split(",") if o.strip()]
-        if isinstance(value, list):
-            return [str(o) for o in value]
-        return ["*"]
+    # CORS — se declara como STRING crudo (no list[str]) a propósito.
+    # pydantic-settings intenta json.loads() sobre campos de tipo lista ANTES
+    # de cualquier validador, y "*" o CSV no son JSON válido → crashea el arranque.
+    # Guardamos el string tal cual y lo parseamos en allowed_origins_list.
+    allowed_origins: str = "*"
 
     @field_validator("secret_key")
     @classmethod
     def _warn_default_secret(cls, value: str) -> str:
         # No bloquea el arranque (para no romper dev), pero deja constancia.
         if value == "dev_secret_change_in_production":
-            import warnings
             warnings.warn(
                 "SECRET_KEY usa el valor por defecto. Configura uno seguro en producción.",
                 stacklevel=2,
             )
         return value
+
+    @property
+    def allowed_origins_list(self) -> list[str]:
+        """
+        Parsea allowed_origins (string) a lista. Acepta:
+          - "*"                              → ["*"]
+          - "https://a.com,https://b.com"    → CSV
+          - '["https://a.com"]'              → JSON
+        """
+        raw = self.allowed_origins.strip()
+        if not raw:
+            return ["*"]
+        if raw.startswith("["):
+            try:
+                return [str(o) for o in json.loads(raw)]
+            except (ValueError, TypeError):
+                pass
+        return [o.strip() for o in raw.split(",") if o.strip()]
 
     @property
     def is_production(self) -> bool:
