@@ -6,7 +6,6 @@ import 'package:flutter_app/features/home/presentation/mappers/profile_view_data
 import 'package:flutter_app/features/home/presentation/providers/profile_provider.dart';
 import 'package:flutter_app/features/home/presentation/widgets/contact_card.dart';
 import 'package:flutter_app/features/home/presentation/widgets/profile_card.dart';
-import 'package:flutter_app/features/home/presentation/widgets/report_menu.dart';
 import 'package:flutter_app/features/home/presentation/widgets/role_toggle.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -124,8 +123,6 @@ class _ProfileBodyState extends State<_ProfileBody> {
             ),
             const SizedBox(height: 16),
           ],
-          ReportMenu(role: _selectedRole),
-          const SizedBox(height: 16),
           ContactCard(data: widget.data),
         ],
       ),
