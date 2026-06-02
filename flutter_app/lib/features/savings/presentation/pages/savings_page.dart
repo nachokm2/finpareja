@@ -17,6 +17,12 @@ class SavingsPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Metas de ahorro')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showCreate(context),
+        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text('Nueva meta', style: TextStyle(color: Colors.white)),
+      ),
       body: goalsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => ErrorRetry(
@@ -39,6 +45,148 @@ class SavingsPage extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showCreate(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => const _CreateGoalSheet(),
+    );
+  }
+}
+
+/// Bottom sheet para crear una meta de ahorro: nombre, emoji y monto objetivo.
+class _CreateGoalSheet extends ConsumerStatefulWidget {
+  const _CreateGoalSheet();
+
+  @override
+  ConsumerState<_CreateGoalSheet> createState() => _CreateGoalSheetState();
+}
+
+class _CreateGoalSheetState extends ConsumerState<_CreateGoalSheet> {
+  final _nombreCtrl = TextEditingController();
+  final _montoCtrl = TextEditingController();
+  String _emoji = '🎯';
+  bool _saving = false;
+
+  static const _emojis = ['🎯', '🏖️', '🏠', '🚗', '✈️', '💍', '🎓', '🛡️', '🎁'];
+
+  @override
+  void dispose() {
+    _nombreCtrl.dispose();
+    _montoCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final nombre = _nombreCtrl.text.trim();
+    final monto = double.tryParse(_montoCtrl.text);
+    if (nombre.isEmpty || monto == null || monto <= 0) return;
+    setState(() => _saving = true);
+    final ok = await ref.read(savingGoalsProvider.notifier).create(
+          nombre: nombre,
+          montoObjetivo: monto,
+          icono: _emoji,
+        );
+    if (!mounted) return;
+    setState(() => _saving = false);
+    if (ok) {
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo crear la meta')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).viewPadding.bottom,
+        left: 20,
+        right: 20,
+        top: 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Nueva meta de ahorro',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _nombreCtrl,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              labelText: 'Nombre',
+              hintText: 'Ej: Vacaciones, fondo de emergencia...',
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text('Ícono', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _emojis.map((e) {
+              final selected = _emoji == e;
+              return GestureDetector(
+                onTap: () => setState(() => _emoji = e),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? AppColors.primary.withAlpha(30)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: selected
+                          ? AppColors.primary
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(e, style: const TextStyle(fontSize: 22)),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _montoCtrl,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'Monto objetivo',
+              prefixText: '\$ ',
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _saving ? null : _save,
+              child: _saving
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Crear meta'),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
       ),
     );
   }
