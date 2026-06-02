@@ -59,6 +59,11 @@ class BudgetsPage extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      // Limita el alto al 85% de la pantalla para que el SingleChildScrollView
+      // tenga un área fija dentro de la cual desplazarse.
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
