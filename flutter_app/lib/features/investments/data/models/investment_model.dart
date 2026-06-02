@@ -1,3 +1,4 @@
+import 'package:flutter_app/core/utils/num_parser.dart';
 import 'package:flutter_app/features/investments/domain/entities/investment_entity.dart';
 
 class InvestmentModel extends InvestmentEntity {
@@ -27,11 +28,11 @@ class InvestmentModel extends InvestmentEntity {
         createdAt: DateTime.parse(json['created_at'] as String),
         tipo: json['tipo'] as String?,
         simbolo: json['simbolo'] as String?,
-        cantidad: (json['cantidad'] as num?)?.toDouble(),
-        precioCompra: (json['precio_compra'] as num?)?.toDouble(),
-        precioActual: (json['precio_actual'] as num?)?.toDouble(),
-        valorActual: (json['valor_actual'] as num?)?.toDouble(),
-        gananciaPerdida: (json['ganancia_perdida'] as num?)?.toDouble(),
+        cantidad: NumParser.toDoubleOrNull(json['cantidad']),
+        precioCompra: NumParser.toDoubleOrNull(json['precio_compra']),
+        precioActual: NumParser.toDoubleOrNull(json['precio_actual']),
+        valorActual: NumParser.toDoubleOrNull(json['valor_actual']),
+        gananciaPerdida: NumParser.toDoubleOrNull(json['ganancia_perdida']),
         notas: json['notas'] as String?,
         fechaCompra: json['fecha_compra'] != null
             ? DateTime.parse(json['fecha_compra'] as String)

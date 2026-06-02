@@ -1,3 +1,5 @@
+import 'package:flutter_app/core/utils/num_parser.dart';
+
 class MonthlySummary {
   const MonthlySummary({
     required this.anio,
@@ -19,10 +21,10 @@ class MonthlySummary {
       MonthlySummary(
         anio: json['anio'] as int,
         mes: json['mes'] as int,
-        ingresos: (json['ingresos'] as num).toDouble(),
-        gastos: (json['gastos'] as num).toDouble(),
-        balance: (json['balance'] as num).toDouble(),
-        tasaAhorro: (json['tasa_ahorro'] as num?)?.toDouble() ?? 0,
+        ingresos: NumParser.toDouble(json['ingresos']),
+        gastos: NumParser.toDouble(json['gastos']),
+        balance: NumParser.toDouble(json['balance']),
+        tasaAhorro: NumParser.toDouble(json['tasa_ahorro']),
       );
 
   /// 0–100 basado en tasa de ahorro y balance

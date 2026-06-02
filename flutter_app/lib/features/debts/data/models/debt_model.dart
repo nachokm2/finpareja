@@ -1,3 +1,4 @@
+import 'package:flutter_app/core/utils/num_parser.dart';
 import 'package:flutter_app/features/debts/domain/entities/debt_entity.dart';
 
 class DebtModel extends DebtEntity {
@@ -20,9 +21,9 @@ class DebtModel extends DebtEntity {
         id: json['id'] as int,
         usuarioId: json['usuario_id'] as int,
         acreedor: json['acreedor'] as String,
-        montoOriginal: (json['monto_original'] as num).toDouble(),
-        montoPendiente: (json['monto_pendiente'] as num).toDouble(),
-        tasaInteres: (json['tasa_interes'] as num?)?.toDouble() ?? 0,
+        montoOriginal: NumParser.toDouble(json['monto_original']),
+        montoPendiente: NumParser.toDouble(json['monto_pendiente']),
+        tasaInteres: NumParser.toDouble(json['tasa_interes']),
         estado: json['estado'] as String? ?? 'activa',
         createdAt: DateTime.parse(json['created_at'] as String),
         descripcion: json['descripcion'] as String?,

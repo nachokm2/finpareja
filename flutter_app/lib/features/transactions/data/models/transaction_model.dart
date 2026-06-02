@@ -1,3 +1,4 @@
+import 'package:flutter_app/core/utils/num_parser.dart';
 import 'package:flutter_app/features/categories/data/models/category_model.dart';
 import 'package:flutter_app/features/transactions/domain/entities/transaction_entity.dart';
 
@@ -26,14 +27,14 @@ class TransactionModel extends TransactionEntity {
       id: json['id'] as int,
       usuarioId: json['usuario_id'] as int,
       tipo: json['tipo'] as String,
-      monto: (json['monto'] as num).toDouble(),
+      monto: NumParser.toDouble(json['monto']),
       moneda: json['moneda'] as String? ?? 'CLP',
       descripcion: json['descripcion'] as String?,
       fecha: DateTime.parse(json['fecha'] as String),
       categoriaId: json['categoria_id'] as int?,
       category: catJson != null ? CategoryModel.fromJson(catJson) : null,
       esCompartido: json['es_compartido'] as bool? ?? false,
-      porcentajeUsuario: (json['porcentaje_usuario'] as num?)?.toDouble() ?? 100.0,
+      porcentajeUsuario: NumParser.toDouble(json['porcentaje_usuario'], fallback: 100),
       recurrente: json['recurrente'] as bool? ?? false,
       frecuencia: json['frecuencia'] as String?,
       notas: json['notas'] as String?,

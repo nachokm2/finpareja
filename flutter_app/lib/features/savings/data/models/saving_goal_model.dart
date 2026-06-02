@@ -1,3 +1,4 @@
+import 'package:flutter_app/core/utils/num_parser.dart';
 import 'package:flutter_app/features/savings/domain/entities/saving_goal_entity.dart';
 
 class SavingGoalModel extends SavingGoalEntity {
@@ -12,11 +13,11 @@ class SavingGoalModel extends SavingGoalEntity {
         id: json['id'] as int,
         usuarioId: json['usuario_id'] as int,
         nombre: json['nombre'] as String,
-        montoObjetivo: (json['monto_objetivo'] as num).toDouble(),
-        montoActual: (json['monto_actual'] as num?)?.toDouble() ?? 0,
+        montoObjetivo: NumParser.toDouble(json['monto_objetivo']),
+        montoActual: NumParser.toDouble(json['monto_actual']),
         moneda: json['moneda'] as String? ?? 'CLP',
         estado: json['estado'] as String? ?? 'activa',
-        progresoPorcentaje: (json['progreso_porcentaje'] as num?)?.toDouble() ?? 0,
+        progresoPorcentaje: NumParser.toDouble(json['progreso_porcentaje']),
         createdAt: DateTime.parse(json['created_at'] as String),
         descripcion: json['descripcion'] as String?,
         icono: json['icono'] as String?,

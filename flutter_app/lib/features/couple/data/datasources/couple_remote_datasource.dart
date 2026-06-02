@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_app/core/utils/num_parser.dart';
 import 'package:flutter_app/features/couple/domain/entities/couple_info.dart';
 import 'package:flutter_app/features/couple/domain/entities/couple_summary.dart';
 
@@ -32,15 +33,15 @@ class CoupleRemoteDataSource {
         usuarioId: mm['usuario_id'] as int,
         nombre: mm['nombre'] as String? ?? 'Usuario',
         rol: mm['rol'] as String? ?? 'member',
-        ingresos: (mm['ingresos'] as num?)?.toDouble() ?? 0,
-        gastos: (mm['gastos'] as num?)?.toDouble() ?? 0,
-        patrimonio: (mm['patrimonio'] as num?)?.toDouble() ?? 0,
-        porcentaje: (mm['porcentaje'] as num?)?.toDouble() ?? 0,
+        ingresos: NumParser.toDouble(mm['ingresos']),
+        gastos: NumParser.toDouble(mm['gastos']),
+        patrimonio: NumParser.toDouble(mm['patrimonio']),
+        porcentaje: NumParser.toDouble(mm['porcentaje']),
       );
     }).toList();
     return CoupleSummary(
       parejaId: m['pareja_id'] as int,
-      patrimonioCombinado: (m['patrimonio_combinado'] as num?)?.toDouble() ?? 0,
+      patrimonioCombinado: NumParser.toDouble(m['patrimonio_combinado']),
       miembros: miembros,
     );
   }

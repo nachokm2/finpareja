@@ -1,3 +1,4 @@
+import 'package:flutter_app/core/utils/num_parser.dart';
 import 'package:flutter_app/features/budgets/domain/entities/budget_entity.dart';
 
 class BudgetModel extends BudgetEntity {
@@ -11,14 +12,14 @@ class BudgetModel extends BudgetEntity {
   factory BudgetModel.fromJson(Map<String, dynamic> json) => BudgetModel(
         id: json['id'] as int,
         usuarioId: json['usuario_id'] as int,
-        montoLimite: (json['monto_limite'] as num).toDouble(),
+        montoLimite: NumParser.toDouble(json['monto_limite']),
         periodo: json['periodo'] as String? ?? 'mensual',
-        alertaPorcentaje: (json['alerta_porcentaje'] as num?)?.toDouble() ?? 80.0,
+        alertaPorcentaje: NumParser.toDouble(json['alerta_porcentaje'], fallback: 80),
         categoriaId: json['categoria_id'] as int?,
         mes: json['mes'] as int?,
         anio: json['anio'] as int?,
-        montoGastado: (json['monto_gastado'] as num?)?.toDouble() ?? 0.0,
-        porcentajeUsado: (json['porcentaje_usado'] as num?)?.toDouble() ?? 0.0,
+        montoGastado: NumParser.toDouble(json['monto_gastado']),
+        porcentajeUsado: NumParser.toDouble(json['porcentaje_usado']),
         alertaActiva: json['alerta_activa'] as bool? ?? false,
       );
 
