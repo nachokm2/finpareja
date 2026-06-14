@@ -46,3 +46,29 @@ async def get_current_user(
             detail="Usuario no encontrado o inactivo",
         )
     return user
+
+
+async def assert_couple_member(db: AsyncSession, user_id: int, pareja_id: int | None) -> None:
+    """
+    Verifica que [user_id] sea miembro de [pareja_id].
+
+    Previene IDOR (OWASP API #1): sin esta comprobación, un usuario podría
+    enviar el pareja_id de otra pareja en el body y contaminar sus datos.
+    Si pareja_id es None, la entidad es personal y no requiere validación.
+    """
+    if pareja_id is None:
+        return
+
+    from .models.couple import CoupleMember
+
+    result = await db.execute(
+        select(CoupleMember).where(
+            CoupleMember.pareja_id == pareja_id,
+            CoupleMember.usuario_id == user_id,
+        )
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No perteneces a esta pareja",
+        )

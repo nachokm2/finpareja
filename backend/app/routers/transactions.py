@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 
-from ..dependencies import get_db, get_current_user
+from ..dependencies import get_db, get_current_user, assert_couple_member
 from ..models.user import User
 from ..models.transaction import Transaction
 from ..schemas.transaction import (
@@ -54,6 +54,7 @@ async def create_transaction(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await assert_couple_member(db, current_user.id, body.pareja_id)
     tx = Transaction(
         usuario_id=current_user.id,
         **body.model_dump(),

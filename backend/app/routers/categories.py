@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 
-from ..dependencies import get_db, get_current_user
+from ..dependencies import get_db, get_current_user, assert_couple_member
 from ..models.user import User
 from ..models.category import Category
 from ..schemas.category import CategoryCreate, CategoryUpdate, CategoryResponse
@@ -29,6 +29,7 @@ async def create_category(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await assert_couple_member(db, current_user.id, body.pareja_id)
     cat = Category(
         usuario_id=None if body.pareja_id else current_user.id,
         pareja_id=body.pareja_id,

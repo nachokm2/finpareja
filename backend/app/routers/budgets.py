@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 
-from ..dependencies import get_db, get_current_user
+from ..dependencies import get_db, get_current_user, assert_couple_member
 from ..models.user import User
 from ..models.budget import Budget
 from ..models.transaction import Transaction
@@ -55,6 +55,7 @@ async def create_budget(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await assert_couple_member(db, current_user.id, body.pareja_id)
     b = Budget(usuario_id=current_user.id, **body.model_dump())
     db.add(b)
     await db.commit()
