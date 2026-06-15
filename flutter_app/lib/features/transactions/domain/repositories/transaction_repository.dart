@@ -18,6 +18,8 @@ abstract class TransactionRepository {
     String? descripcion,
     int? categoriaId,
     bool esCompartido = false,
+    double porcentajeUsuario = 100,
+    int? parejaId,
     String moneda = 'CLP',
     String? notas,
   });

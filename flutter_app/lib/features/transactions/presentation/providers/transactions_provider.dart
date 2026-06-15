@@ -2,7 +2,6 @@ import 'package:flutter_app/core/network/dio_provider.dart';
 import 'package:flutter_app/features/transactions/data/datasources/transaction_remote_datasource.dart';
 import 'package:flutter_app/features/transactions/data/repositories/transaction_repository_impl.dart';
 import 'package:flutter_app/features/transactions/domain/entities/transaction_entity.dart';
-import 'package:flutter_app/features/transactions/domain/usecases/create_transaction_usecase.dart';
 import 'package:flutter_app/features/transactions/domain/usecases/delete_transaction_usecase.dart';
 import 'package:flutter_app/features/transactions/domain/usecases/get_transactions_usecase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -49,15 +48,21 @@ class TransactionsNotifier extends AsyncNotifier<List<TransactionEntity>> {
     String? descripcion,
     int? categoriaId,
     String? notas,
+    bool esCompartido = false,
+    double porcentajeUsuario = 100,
+    int? parejaId,
   }) async {
     final repo = await ref.read(_txRepoProvider.future);
-    final result = await CreateTransactionUseCase(repo).call(
+    final result = await repo.createTransaction(
       tipo: tipo,
       monto: monto,
       fecha: fecha,
       descripcion: descripcion,
       categoriaId: categoriaId,
       notas: notas,
+      esCompartido: esCompartido,
+      porcentajeUsuario: porcentajeUsuario,
+      parejaId: parejaId,
     );
     return result.fold(
       (f) => false,

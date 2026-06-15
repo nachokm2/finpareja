@@ -10,9 +10,34 @@ from ..dependencies import get_db, get_current_user
 from ..models.user import User
 from ..models.couple import Couple, CoupleMember, CoupleInvitation
 from ..models.transaction import Transaction
-from ..schemas.couple import CoupleCreate, CoupleResponse, InviteRequest, AcceptInviteRequest
+from ..models.settlement import Settlement
+from ..schemas.couple import (
+    CoupleCreate, CoupleResponse, InviteRequest, AcceptInviteRequest,
+    SettleRequest, SettlementResponse,
+)
 
 router = APIRouter()
+
+
+async def _get_membership(db: AsyncSession, user_id: int) -> CoupleMember:
+    """Devuelve la membresía de pareja del usuario o lanza 404."""
+    m = (await db.execute(
+        select(CoupleMember).where(CoupleMember.usuario_id == user_id)
+    )).scalar_one_or_none()
+    if m is None:
+        raise HTTPException(status_code=404, detail="No perteneces a ninguna pareja")
+    return m
+
+
+async def _partner_id(db: AsyncSession, pareja_id: int, user_id: int) -> int | None:
+    """ID del otro miembro de la pareja (None si todavía no se unió nadie)."""
+    rows = (await db.execute(
+        select(CoupleMember.usuario_id).where(
+            CoupleMember.pareja_id == pareja_id,
+            CoupleMember.usuario_id != user_id,
+        )
+    )).scalars().all()
+    return rows[0] if rows else None
 
 
 async def _net_worth_for(db: AsyncSession, usuario_id: int) -> tuple[Decimal, Decimal]:
@@ -164,3 +189,131 @@ async def couple_summary(
         "patrimonio_combinado": patrimonio_total,
         "miembros": miembros_data,
     }
+
+
+async def _shared_owed_to(db: AsyncSession, pareja_id: int, payer_id: int, other_id: int) -> Decimal:
+    """
+    Cuánto le debe [other_id] a [payer_id] por gastos compartidos que pagó
+    [payer_id]. Cada gasto compartido lo paga quien lo registró por el monto
+    total; la parte que NO le corresponde (100 - porcentaje_usuario) es lo
+    que le debe el otro.
+    """
+    rows = (await db.execute(
+        select(Transaction.monto, Transaction.porcentaje_usuario).where(
+            Transaction.usuario_id == payer_id,
+            Transaction.pareja_id == pareja_id,
+            Transaction.es_compartido == True,  # noqa: E712
+            Transaction.tipo == "gasto",
+        )
+    )).all()
+    total = Decimal("0")
+    for monto, pct in rows:
+        parte_otro = monto * (Decimal("100") - pct) / Decimal("100")
+        total += parte_otro
+    return total
+
+
+async def _settlements_sum(db: AsyncSession, pagador_id: int, receptor_id: int) -> Decimal:
+    total = (await db.execute(
+        select(func.coalesce(func.sum(Settlement.monto), Decimal("0"))).where(
+            Settlement.pagador_id == pagador_id,
+            Settlement.receptor_id == receptor_id,
+        )
+    )).scalar_one()
+    return Decimal(str(total))
+
+
+@router.get("/balance")
+async def couple_balance(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Balance neto de gastos compartidos entre los dos miembros.
+
+    balance > 0  → la pareja te debe (tú pagaste de más)
+    balance < 0  → tú le debes a la pareja
+    balance == 0 → están a mano
+
+    Cálculo:
+      lo que el otro me debe  = gastos compartidos que YO pagué × parte del otro
+      lo que yo le debo       = gastos compartidos que el OTRO pagó × mi parte
+      neto bruto = (me debe) - (le debo)
+      ajuste por liquidaciones: + lo que YO ya le pagué, - lo que ÉL ya me pagó
+    """
+    membership = await _get_membership(db, current_user.id)
+    pareja_id = membership.pareja_id
+    other_id = await _partner_id(db, pareja_id, current_user.id)
+
+    if other_id is None:
+        return {
+            "pareja_id": pareja_id,
+            "balance": Decimal("0"),
+            "te_deben": Decimal("0"),
+            "debes": Decimal("0"),
+            "tiene_pareja_completa": False,
+        }
+
+    me_debe = await _shared_owed_to(db, pareja_id, current_user.id, other_id)
+    le_debo = await _shared_owed_to(db, pareja_id, other_id, current_user.id)
+
+    # Liquidaciones: lo que yo ya pagué reduce lo que debo; lo que él me pagó
+    # reduce lo que me deben.
+    yo_pague = await _settlements_sum(db, current_user.id, other_id)
+    el_pago = await _settlements_sum(db, other_id, current_user.id)
+
+    te_deben = me_debe - el_pago
+    debes = le_debo - yo_pague
+    balance = te_deben - debes
+
+    return {
+        "pareja_id": pareja_id,
+        "balance": balance,
+        "te_deben": te_deben if te_deben > 0 else Decimal("0"),
+        "debes": debes if debes > 0 else Decimal("0"),
+        "tiene_pareja_completa": True,
+    }
+
+
+@router.post("/liquidar", response_model=SettlementResponse, status_code=status.HTTP_201_CREATED)
+async def settle(
+    body: SettleRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Registra un pago del usuario actual al otro miembro para saldar deuda."""
+    if body.monto <= 0:
+        raise HTTPException(status_code=400, detail="El monto debe ser mayor a 0")
+
+    membership = await _get_membership(db, current_user.id)
+    other_id = await _partner_id(db, membership.pareja_id, current_user.id)
+    if other_id is None:
+        raise HTTPException(status_code=400, detail="Tu pareja aún no tiene un segundo miembro")
+
+    settlement = Settlement(
+        pareja_id=membership.pareja_id,
+        pagador_id=current_user.id,
+        receptor_id=other_id,
+        monto=body.monto,
+        nota=body.nota,
+        fecha=body.fecha,
+    )
+    db.add(settlement)
+    await db.commit()
+    await db.refresh(settlement)
+    return settlement
+
+
+@router.get("/liquidaciones", response_model=list[SettlementResponse])
+async def list_settlements(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Historial de liquidaciones de la pareja (ambas direcciones)."""
+    membership = await _get_membership(db, current_user.id)
+    rows = (await db.execute(
+        select(Settlement)
+        .where(Settlement.pareja_id == membership.pareja_id)
+        .order_by(Settlement.fecha.desc(), Settlement.id.desc())
+    )).scalars().all()
+    return rows

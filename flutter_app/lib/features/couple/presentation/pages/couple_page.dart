@@ -3,6 +3,7 @@ import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_app/core/utils/currency_formatter.dart';
 import 'package:flutter_app/core/widgets/animated_count.dart';
 import 'package:flutter_app/core/widgets/error_retry.dart';
+import 'package:flutter_app/features/couple/domain/entities/couple_balance.dart';
 import 'package:flutter_app/features/couple/domain/entities/couple_summary.dart';
 import 'package:flutter_app/features/couple/presentation/providers/couple_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,6 +33,11 @@ class CouplePage extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                if (state.balance != null &&
+                    state.balance!.tieneParejaCompleta) ...[
+                  _BalanceCard(balance: state.balance!, ref: ref),
+                  const SizedBox(height: 16),
+                ],
                 if (state.summary != null)
                   _CombinedWorthCard(summary: state.summary!),
                 const SizedBox(height: 16),
@@ -43,6 +49,134 @@ class CouplePage extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+// ─── Balance de gastos compartidos (el core del producto) ────────────────────
+
+class _BalanceCard extends StatelessWidget {
+  const _BalanceCard({required this.balance, required this.ref});
+  final CoupleBalance balance;
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    final aMano = balance.aMano;
+    final teDeben = balance.teDebenAti;
+    final color = aMano
+        ? AppColors.primary
+        : (teDeben ? AppColors.income : AppColors.expense);
+    final titulo = aMano
+        ? 'Están a mano'
+        : (teDeben ? 'Te deben' : 'Le debes a tu pareja');
+    final monto = balance.balance.abs();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [BoxShadow(color: AppColors.cardShadow, blurRadius: 12)],
+        border: Border.all(color: color.withAlpha(60)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                aMano
+                    ? Icons.check_circle_outline
+                    : (teDeben ? Icons.trending_up : Icons.trending_down),
+                color: color,
+              ),
+              const SizedBox(width: 8),
+              Text(titulo,
+                  style: TextStyle(
+                      color: color, fontWeight: FontWeight.w700, fontSize: 15)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          AnimatedCount(
+            value: monto,
+            style: TextStyle(
+                color: color, fontSize: 30, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Balance de gastos compartidos',
+            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+          ),
+          // Solo el que debe puede saldar.
+          if (!aMano && !teDeben) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _showSettle(context, monto),
+                icon: const Icon(Icons.handshake_outlined, size: 18),
+                label: const Text('Saldar mi deuda'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _showSettle(BuildContext context, double sugerido) {
+    final ctrl = TextEditingController(text: sugerido.toInt().toString());
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom +
+              MediaQuery.of(ctx).viewPadding.bottom,
+          left: 20,
+          right: 20,
+          top: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Saldar deuda',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+            const SizedBox(height: 4),
+            const Text(
+              'Registra cuánto le pagaste a tu pareja.',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ctrl,
+              keyboardType: TextInputType.number,
+              decoration:
+                  const InputDecoration(labelText: 'Monto', prefixText: '\$ '),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  final monto = double.tryParse(ctrl.text);
+                  if (monto == null || monto <= 0) return;
+                  Navigator.pop(ctx);
+                  await ref.read(coupleProvider.notifier).settle(monto);
+                },
+                child: const Text('Registrar pago'),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
       ),
     );
   }

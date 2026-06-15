@@ -3,6 +3,7 @@ import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_app/core/utils/currency_formatter.dart';
 import 'package:flutter_app/features/categories/domain/entities/category_entity.dart';
 import 'package:flutter_app/features/categories/presentation/providers/categories_provider.dart';
+import 'package:flutter_app/features/couple/presentation/providers/couple_provider.dart';
 import 'package:flutter_app/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:flutter_app/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +28,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
   CategoryEntity? _selectedCategory;
   late DateTime _fecha;
   bool _saving = false;
+  bool _compartir = false; // dividir 50/50 con la pareja
 
   bool get _isEditing => widget.transaction != null;
 
@@ -40,6 +42,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
       _monto = tx.monto.toInt().toString();
       _descripcion = tx.descripcion;
       _fecha = tx.fecha;
+      _compartir = tx.esCompartido;
     } else {
       _tipo = 'gasto';
       _monto = '0';
@@ -77,6 +80,10 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
     }
     setState(() => _saving = true);
     final notifier = ref.read(transactionsProvider.notifier);
+    // Solo gastos compartidos: divide 50/50 con la pareja.
+    final compartir = _compartir && _tipo == 'gasto';
+    final parejaId =
+        compartir ? ref.read(currentCoupleIdProvider).valueOrNull : null;
     final ok = _isEditing
         ? await notifier.edit(
             id: widget.transaction!.id,
@@ -92,6 +99,9 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
             fecha: _fecha,
             descripcion: _descripcion,
             categoriaId: _selectedCategory?.id,
+            esCompartido: compartir && parejaId != null,
+            porcentajeUsuario: compartir ? 50 : 100,
+            parejaId: compartir ? parejaId : null,
           );
     if (!mounted) return;
     setState(() => _saving = false);
@@ -294,6 +304,31 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
               onChanged: (v) => _descripcion = v.isEmpty ? null : v,
             ),
           ),
+
+          // Dividir con pareja: solo en gastos y si el usuario tiene pareja.
+          if (_tipo == 'gasto' && !_isEditing)
+            ref.watch(currentCoupleIdProvider).maybeWhen(
+                  data: (parejaId) => parejaId == null
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: SwitchListTile(
+                              value: _compartir,
+                              onChanged: (v) => setState(() => _compartir = v),
+                              title: const Text('Dividir con mi pareja'),
+                              subtitle: const Text('50/50 — la otra mitad queda como deuda'),
+                              secondary: const Icon(Icons.people_alt_outlined),
+                            ),
+                          ),
+                        ),
+                  orElse: () => const SizedBox.shrink(),
+                ),
 
           const Spacer(),
 

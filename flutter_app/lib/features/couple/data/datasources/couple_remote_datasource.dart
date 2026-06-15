@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_app/core/utils/num_parser.dart';
+import 'package:flutter_app/features/couple/domain/entities/couple_balance.dart';
 import 'package:flutter_app/features/couple/domain/entities/couple_info.dart';
 import 'package:flutter_app/features/couple/domain/entities/couple_summary.dart';
 
@@ -57,5 +58,26 @@ class CoupleRemoteDataSource {
 
   Future<void> accept(String token) async {
     await _dio.post('/parejas/accept', data: {'token': token});
+  }
+
+  Future<CoupleBalance> getBalance() async {
+    final resp = await _dio.get('/parejas/balance');
+    final m = resp.data as Map<String, dynamic>;
+    return CoupleBalance(
+      balance: NumParser.toDouble(m['balance']),
+      teDeben: NumParser.toDouble(m['te_deben']),
+      debes: NumParser.toDouble(m['debes']),
+      tieneParejaCompleta: m['tiene_pareja_completa'] as bool? ?? false,
+    );
+  }
+
+  /// Registra un pago del usuario actual a su pareja para saldar deuda.
+  Future<void> settle(double monto) async {
+    final now = DateTime.now();
+    await _dio.post('/parejas/liquidar', data: {
+      'monto': monto,
+      'fecha':
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
+    });
   }
 }

@@ -17,6 +17,7 @@ class TransactionEntity {
     this.category,
     this.notas,
     this.frecuencia,
+    this.parejaId,
   });
 
   final int id;
@@ -33,6 +34,7 @@ class TransactionEntity {
   final bool recurrente;
   final String? frecuencia;
   final String? notas;
+  final int? parejaId;
   final DateTime createdAt;
 
   bool get esGasto => tipo == 'gasto';

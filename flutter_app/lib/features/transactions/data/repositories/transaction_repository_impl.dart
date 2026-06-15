@@ -47,6 +47,8 @@ class TransactionRepositoryImpl implements TransactionRepository {
     String? descripcion,
     int? categoriaId,
     bool esCompartido = false,
+    double porcentajeUsuario = 100,
+    int? parejaId,
     String moneda = 'CLP',
     String? notas,
   }) async {
@@ -59,12 +61,13 @@ class TransactionRepositoryImpl implements TransactionRepository {
         moneda: moneda,
         fecha: fecha,
         esCompartido: esCompartido,
-        porcentajeUsuario: 100,
+        porcentajeUsuario: porcentajeUsuario,
         recurrente: false,
         createdAt: DateTime.now(),
         descripcion: descripcion,
         categoriaId: categoriaId,
         notas: notas,
+        parejaId: parejaId,
       );
       final result = await _remote.createTransaction(model.toCreateJson());
       return Right(result);
