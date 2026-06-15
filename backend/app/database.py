@@ -5,13 +5,14 @@ from .config import get_settings
 
 settings = get_settings()
 
-engine = create_async_engine(
-    settings.async_database_url,
-    echo=settings.debug,
-    pool_size=10,
-    max_overflow=20,
-    pool_pre_ping=True,
-)
+# El pooling con pool_size/max_overflow solo aplica a Postgres. SQLite
+# (usado en tests) usa StaticPool y rechaza esos argumentos.
+_url = settings.async_database_url
+_engine_kwargs: dict = {"echo": settings.debug}
+if not _url.startswith("sqlite"):
+    _engine_kwargs.update(pool_size=10, max_overflow=20, pool_pre_ping=True)
+
+engine = create_async_engine(_url, **_engine_kwargs)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,

@@ -23,8 +23,8 @@ jobs:
           python-version: "3.12"
           cache: pip
 
-      - name: Instalar dependencias
-        run: pip install -r requirements.txt
+      - name: Instalar dependencias (incluye test)
+        run: pip install -r requirements-dev.txt
 
       - name: Compilar (sintaxis)
         run: python -m compileall app
@@ -33,9 +33,12 @@ jobs:
         env:
           # Valores dummy: el import no debe requerir DB real.
           DATABASE_URL: postgresql+asyncpg://u:p@localhost:5432/db
-          SECRET_KEY: ci_dummy_secret
+          SECRET_KEY: ci_dummy_secret_minimo_32_caracteres_123456
           APP_ENV: ci
         run: python -c "import app.main; print('app.main OK')"
+
+      - name: Ejecutar tests (pytest)
+        run: python -m pytest -v
 
   # ── Frontend: formato + análisis estático de Flutter ────────────────────────
   flutter:
