@@ -6,6 +6,7 @@ from sqlalchemy import select
 
 from ..dependencies import get_db, get_current_user
 from ..config import get_settings
+from ..core.rate_limit import limiter
 from ..core.security import (
     verify_password,
     hash_password,
@@ -34,6 +35,7 @@ def _issue_tokens(user_id: int) -> tuple[str, str, str]:
 
 
 @router.post("/login", response_model=TokenResponse)
+@limiter.limit("5/minute")
 async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == body.email.lower()))
     user = result.scalar_one_or_none()
@@ -55,7 +57,8 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
+@limiter.limit("3/minute")
+async def register(body: RegisterRequest, request: Request, db: AsyncSession = Depends(get_db)):
     existing = await db.execute(select(User).where(User.email == body.email.lower()))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El correo ya está registrado")

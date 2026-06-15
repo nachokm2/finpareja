@@ -2,7 +2,7 @@ import json
 import warnings
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -34,16 +34,45 @@ class Settings(BaseSettings):
     # Guardamos el string tal cual y lo parseamos en allowed_origins_list.
     allowed_origins: str = "*"
 
-    @field_validator("secret_key")
-    @classmethod
-    def _warn_default_secret(cls, value: str) -> str:
-        # No bloquea el arranque (para no romper dev), pero deja constancia.
-        if value == "dev_secret_change_in_production":
+    _DEFAULT_SECRET = "dev_secret_change_in_production"
+
+    @model_validator(mode="after")
+    def _validate_production_security(self) -> "Settings":
+        """
+        Endurecimiento de seguridad para producción (SEC-03, SEC-07).
+
+        En producción ABORTA el arranque si:
+          - SECRET_KEY sigue siendo el valor por defecto o es muy corto.
+          - ALLOWED_ORIGINS es "*" (CORS abierto).
+
+        En desarrollo solo emite warnings para no entorpecer el trabajo local.
+        """
+        is_prod = self.app_env == "production"
+
+        # ── SECRET_KEY ─────────────────────────────────────────────────────
+        weak_secret = (
+            self.secret_key == self._DEFAULT_SECRET or len(self.secret_key) < 32
+        )
+        if weak_secret:
+            if is_prod:
+                raise ValueError(
+                    "SECRET_KEY inseguro en producción: configura una clave "
+                    "aleatoria de al menos 32 caracteres "
+                    '(python -c "import secrets; print(secrets.token_hex(64))").'
+                )
             warnings.warn(
-                "SECRET_KEY usa el valor por defecto. Configura uno seguro en producción.",
+                "SECRET_KEY débil o por defecto. Configura uno seguro antes de producción.",
                 stacklevel=2,
             )
-        return value
+
+        # ── CORS ───────────────────────────────────────────────────────────
+        if is_prod and "*" in self.allowed_origins_list:
+            raise ValueError(
+                "ALLOWED_ORIGINS no puede ser '*' en producción: especifica "
+                "los dominios permitidos (CSV o JSON)."
+            )
+
+        return self
 
     @property
     def allowed_origins_list(self) -> list[str]:
