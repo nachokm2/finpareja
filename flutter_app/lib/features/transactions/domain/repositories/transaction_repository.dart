@@ -22,5 +22,14 @@ abstract class TransactionRepository {
     String? notas,
   });
 
+  Future<Either<Failure, TransactionEntity>> updateTransaction({
+    required int id,
+    String? tipo,
+    double? monto,
+    DateTime? fecha,
+    String? descripcion,
+    int? categoriaId,
+  });
+
   Future<Either<Failure, void>> deleteTransaction(int id);
 }

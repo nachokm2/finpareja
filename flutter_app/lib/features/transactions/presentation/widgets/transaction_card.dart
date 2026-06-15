@@ -9,10 +9,12 @@ class TransactionCard extends StatelessWidget {
     super.key,
     required this.transaction,
     this.onDelete,
+    this.onTap,
   });
 
   final TransactionEntity transaction;
   final VoidCallback? onDelete;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,9 @@ class TransactionCard extends StatelessWidget {
         ),
         child: const Icon(Icons.delete_outline, color: AppColors.danger),
       ),
-      child: Container(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
@@ -96,6 +100,7 @@ class TransactionCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

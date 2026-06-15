@@ -76,6 +76,34 @@ class TransactionRepositoryImpl implements TransactionRepository {
   }
 
   @override
+  Future<Either<Failure, TransactionEntity>> updateTransaction({
+    required int id,
+    String? tipo,
+    double? monto,
+    DateTime? fecha,
+    String? descripcion,
+    int? categoriaId,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        if (tipo != null) 'tipo': tipo,
+        if (monto != null) 'monto': monto,
+        if (fecha != null)
+          'fecha':
+              '${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}',
+        if (descripcion != null) 'descripcion': descripcion,
+        if (categoriaId != null) 'categoria_id': categoriaId,
+      };
+      final result = await _remote.updateTransaction(id, body);
+      return Right(result);
+    } on DioException catch (e) {
+      return Left(_mapDio(e));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> deleteTransaction(int id) async {
     try {
       await _remote.deleteTransaction(id);

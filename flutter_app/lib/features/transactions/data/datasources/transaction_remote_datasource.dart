@@ -34,6 +34,12 @@ class TransactionRemoteDataSource {
     return TransactionModel.fromJson(resp.data as Map<String, dynamic>);
   }
 
+  Future<TransactionModel> updateTransaction(
+      int id, Map<String, dynamic> body) async {
+    final resp = await _dio.patch('/transacciones/$id', data: body);
+    return TransactionModel.fromJson(resp.data as Map<String, dynamic>);
+  }
+
   Future<void> deleteTransaction(int id) async {
     await _dio.delete('/transacciones/$id');
   }

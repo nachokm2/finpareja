@@ -3,12 +3,17 @@ import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_app/core/utils/currency_formatter.dart';
 import 'package:flutter_app/features/categories/domain/entities/category_entity.dart';
 import 'package:flutter_app/features/categories/presentation/providers/categories_provider.dart';
+import 'package:flutter_app/features/transactions/domain/entities/transaction_entity.dart';
 import 'package:flutter_app/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 class AddTransactionPage extends ConsumerStatefulWidget {
-  const AddTransactionPage({super.key});
+  /// Si [transaction] viene dado, la pantalla opera en modo edición
+  /// (precarga los campos y hace PATCH); si es null, crea una nueva.
+  const AddTransactionPage({super.key, this.transaction});
+
+  final TransactionEntity? transaction;
 
   @override
   ConsumerState<AddTransactionPage> createState() =>
@@ -16,12 +21,31 @@ class AddTransactionPage extends ConsumerStatefulWidget {
 }
 
 class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
-  String _tipo = 'gasto';
-  String _monto = '0';
+  late String _tipo;
+  late String _monto;
   String? _descripcion;
   CategoryEntity? _selectedCategory;
-  final DateTime _fecha = DateTime.now();
+  late DateTime _fecha;
   bool _saving = false;
+
+  bool get _isEditing => widget.transaction != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final tx = widget.transaction;
+    if (tx != null) {
+      _tipo = tx.tipo;
+      // El monto se muestra sin decimales (CLP); toInt para el teclado.
+      _monto = tx.monto.toInt().toString();
+      _descripcion = tx.descripcion;
+      _fecha = tx.fecha;
+    } else {
+      _tipo = 'gasto';
+      _monto = '0';
+      _fecha = DateTime.now();
+    }
+  }
 
   void _appendDigit(String digit) {
     setState(() {
@@ -52,13 +76,23 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
       return;
     }
     setState(() => _saving = true);
-    final ok = await ref.read(transactionsProvider.notifier).create(
-          tipo: _tipo,
-          monto: amount,
-          fecha: _fecha,
-          descripcion: _descripcion,
-          categoriaId: _selectedCategory?.id,
-        );
+    final notifier = ref.read(transactionsProvider.notifier);
+    final ok = _isEditing
+        ? await notifier.edit(
+            id: widget.transaction!.id,
+            tipo: _tipo,
+            monto: amount,
+            fecha: _fecha,
+            descripcion: _descripcion,
+            categoriaId: _selectedCategory?.id,
+          )
+        : await notifier.create(
+            tipo: _tipo,
+            monto: amount,
+            fecha: _fecha,
+            descripcion: _descripcion,
+            categoriaId: _selectedCategory?.id,
+          );
     if (!mounted) return;
     setState(() => _saving = false);
     if (ok) {
@@ -81,7 +115,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Nueva transaccion'),
+        title: Text(_isEditing ? 'Editar transacción' : 'Nueva transacción'),
         actions: [
           if (_saving)
             const Padding(
@@ -171,13 +205,29 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
               error: (_, __) => const SizedBox.shrink(),
-              data: (categories) => ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  final cat = categories[index];
-                  final selected = _selectedCategory?.id == cat.id;
+              data: (categories) {
+                // Al editar, preselecciona la categoría original una sola vez,
+                // cuando la lista ya cargó (post-frame para no romper el build).
+                if (_isEditing &&
+                    _selectedCategory == null &&
+                    widget.transaction!.categoriaId != null) {
+                  final match = categories
+                      .where((c) => c.id == widget.transaction!.categoriaId);
+                  if (match.isNotEmpty) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        setState(() => _selectedCategory = match.first);
+                      }
+                    });
+                  }
+                }
+                return ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: categories.length,
+                  itemBuilder: (context, index) {
+                    final cat = categories[index];
+                    final selected = _selectedCategory?.id == cat.id;
                   return GestureDetector(
                     onTap: () => setState(
                       () => _selectedCategory = selected ? null : cat,
@@ -220,10 +270,11 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                           ),
                         ],
                       ),
-                    ),
-                  );
-                },
-              ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
 

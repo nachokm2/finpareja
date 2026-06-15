@@ -52,6 +52,19 @@ class SavingGoalRepositoryImpl implements SavingGoalRepository {
   }
 
   @override
+  Future<Either<Failure, SavingGoalEntity>> updateGoal({
+    required int id, String? nombre, double? montoObjetivo,
+  }) async {
+    try {
+      return Right(await _remote.updateGoal(id, {
+        if (nombre != null) 'nombre': nombre,
+        if (montoObjetivo != null) 'monto_objetivo': montoObjetivo,
+      }));
+    } on DioException catch (e) { return Left(_map(e)); }
+    catch (e) { return Left(UnknownFailure(e.toString())); }
+  }
+
+  @override
   Future<Either<Failure, void>> deleteGoal(int id) async {
     try { await _remote.deleteGoal(id); return const Right(null); }
     on DioException catch (e) { return Left(_map(e)); }

@@ -47,6 +47,27 @@ class SavingGoalsNotifier extends AsyncNotifier<List<SavingGoalEntity>> {
     });
   }
 
+  Future<bool> edit({
+    required int id,
+    required String nombre,
+    required double montoObjetivo,
+  }) async {
+    final repo = await ref.read(_savingsRepoProvider.future);
+    final result = await repo.updateGoal(
+      id: id,
+      nombre: nombre,
+      montoObjetivo: montoObjetivo,
+    );
+    return result.fold((f) => false, (updated) {
+      state.whenData((list) {
+        state = AsyncValue.data(
+          list.map((g) => g.id == id ? updated : g).toList(),
+        );
+      });
+      return true;
+    });
+  }
+
   Future<bool> addContribution(int goalId, double monto) async {
     final repo = await ref.read(_savingsRepoProvider.future);
     final result = await AddContributionUseCase(repo).call(

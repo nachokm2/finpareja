@@ -70,6 +70,36 @@ class TransactionsNotifier extends AsyncNotifier<List<TransactionEntity>> {
     );
   }
 
+  Future<bool> edit({
+    required int id,
+    required String tipo,
+    required double monto,
+    required DateTime fecha,
+    String? descripcion,
+    int? categoriaId,
+  }) async {
+    final repo = await ref.read(_txRepoProvider.future);
+    final result = await repo.updateTransaction(
+      id: id,
+      tipo: tipo,
+      monto: monto,
+      fecha: fecha,
+      descripcion: descripcion,
+      categoriaId: categoriaId,
+    );
+    return result.fold(
+      (f) => false,
+      (updated) {
+        state.whenData((list) {
+          state = AsyncValue.data(
+            list.map((t) => t.id == id ? updated : t).toList(),
+          );
+        });
+        return true;
+      },
+    );
+  }
+
   Future<bool> delete(int id) async {
     final repo = await ref.read(_txRepoProvider.future);
     final result = await DeleteTransactionUseCase(repo).call(id);

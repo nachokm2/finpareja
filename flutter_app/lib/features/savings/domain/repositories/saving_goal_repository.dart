@@ -17,5 +17,10 @@ abstract class SavingGoalRepository {
     required DateTime fecha,
     String? nota,
   });
+  Future<Either<Failure, SavingGoalEntity>> updateGoal({
+    required int id,
+    String? nombre,
+    double? montoObjetivo,
+  });
   Future<Either<Failure, void>> deleteGoal(int id);
 }

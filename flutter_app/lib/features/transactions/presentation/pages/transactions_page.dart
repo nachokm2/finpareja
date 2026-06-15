@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_app/core/widgets/empty_state.dart';
 import 'package:flutter_app/core/widgets/error_retry.dart';
+import 'package:flutter_app/features/transactions/presentation/pages/add_transaction_page.dart';
 import 'package:flutter_app/features/transactions/presentation/providers/transactions_provider.dart';
 import 'package:flutter_app/features/transactions/presentation/widgets/transaction_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,6 +40,11 @@ class TransactionsPage extends ConsumerWidget {
                 final tx = transactions[index];
                 return TransactionCard(
                   transaction: tx,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => AddTransactionPage(transaction: tx),
+                    ),
+                  ),
                   onDelete: () async {
                     final deleted = await ref
                         .read(transactionsProvider.notifier)

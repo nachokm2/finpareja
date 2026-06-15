@@ -246,6 +246,12 @@ class _GoalCard extends StatelessWidget {
                 '${goal.progresoPorcentaje.toStringAsFixed(0)}%',
                 style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 16),
               ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
+                visualDensity: VisualDensity.compact,
+                tooltip: 'Editar meta',
+                onPressed: () => _showEdit(context, goal),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -284,6 +290,69 @@ class _GoalCard extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  void _showEdit(BuildContext context, SavingGoalEntity goal) {
+    final nombreCtrl = TextEditingController(text: goal.nombre);
+    final montoCtrl =
+        TextEditingController(text: goal.montoObjetivo.toInt().toString());
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom +
+              MediaQuery.of(ctx).viewPadding.bottom,
+          left: 20,
+          right: 20,
+          top: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Editar meta',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+            const SizedBox(height: 16),
+            TextField(
+              controller: nombreCtrl,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(labelText: 'Nombre'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: montoCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                  labelText: 'Monto objetivo', prefixText: '\$ '),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  final nombre = nombreCtrl.text.trim();
+                  final monto = double.tryParse(montoCtrl.text);
+                  if (nombre.isEmpty || monto == null || monto <= 0) return;
+                  Navigator.pop(ctx);
+                  await ref.read(savingGoalsProvider.notifier).edit(
+                        id: goal.id,
+                        nombre: nombre,
+                        montoObjetivo: monto,
+                      );
+                },
+                child: const Text('Guardar cambios'),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
       ),
     );
   }
