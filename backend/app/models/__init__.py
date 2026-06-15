@@ -1,4 +1,5 @@
 from .user import User, RefreshToken
+from .auth_token import AuthToken
 from .couple import Couple, CoupleMember, CoupleInvitation
 from .category import Category
 from .transaction import Transaction
@@ -9,6 +10,7 @@ from .investment import Investment
 
 __all__ = [
     "User", "RefreshToken",
+    "AuthToken",
     "Couple", "CoupleMember", "CoupleInvitation",
     "Category",
     "Transaction",

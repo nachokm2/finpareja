@@ -28,6 +28,14 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 30
 
+    # Email (SMTP). Si smtp_host está vacío, los códigos se registran en el log
+    # en vez de enviarse (modo dev / sin proveedor configurado todavía).
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "FinPareja <no-reply@finpareja.cl>"
+
     # CORS — se declara como STRING crudo (no list[str]) a propósito.
     # pydantic-settings intenta json.loads() sobre campos de tipo lista ANTES
     # de cualquier validador, y "*" o CSV no son JSON válido → crashea el arranque.

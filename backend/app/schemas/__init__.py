@@ -1,4 +1,8 @@
-from .auth import LoginRequest, RegisterRequest, TokenResponse, RefreshRequest, LogoutRequest
+from .auth import (
+    LoginRequest, RegisterRequest, TokenResponse, RefreshRequest, LogoutRequest,
+    ForgotPasswordRequest, ResetPasswordRequest, VerifyEmailRequest,
+    ResendVerificationRequest,
+)
 from .user import UserResponse, UserUpdate
 from .couple import CoupleCreate, CoupleResponse, InviteRequest, AcceptInviteRequest
 from .category import CategoryCreate, CategoryUpdate, CategoryResponse

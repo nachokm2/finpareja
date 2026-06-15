@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/core/config/env_config.dart';
 import 'package:flutter_app/core/navigation/main_shell.dart';
 import 'package:flutter_app/features/auth/presentation/notifiers/auth_notifier.dart';
+import 'package:flutter_app/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:flutter_app/features/auth/presentation/pages/login_page.dart';
 import 'package:flutter_app/features/auth/presentation/pages/register_page.dart';
 import 'package:flutter_app/features/auth/presentation/pages/splash_page.dart';
@@ -23,6 +24,7 @@ abstract class AppRoutes {
   static const splash = '/';
   static const login = '/login';
   static const register = '/register';
+  static const forgotPassword = '/recuperar-password';
 
   // Pestañas del shell principal
   static const dashboard = '/dashboard';
@@ -77,6 +79,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.register,
         builder: (_, __) => const RegisterPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (_, __) => const ForgotPasswordPage(),
       ),
 
       // ── Rutas full-screen sobre el shell ────────────────────────────
@@ -164,7 +170,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             location == AppRoutes.login ? null : AppRoutes.login,
         data: (authState) {
           final isOnAuthRoute = location == AppRoutes.login ||
-              location == AppRoutes.register;
+              location == AppRoutes.register ||
+              location == AppRoutes.forgotPassword;
           final isOnSplash = location == AppRoutes.splash;
 
           if (authState.isAuthenticated) {

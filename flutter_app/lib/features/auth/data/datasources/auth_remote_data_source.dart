@@ -40,6 +40,22 @@ class AuthRemoteDataSource {
     return resp.data;
   }
 
+  Future<void> forgotPassword(String email) async {
+    await dio.post('/auth/forgot-password', data: {'email': email});
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    await dio.post('/auth/reset-password', data: {
+      'email': email,
+      'code': code,
+      'new_password': newPassword,
+    });
+  }
+
   /// Notifica al backend que el refresh token debe invalidarse.
   /// Si el endpoint aún no existe, se ignora el error para no
   /// bloquear el flujo de cierre de sesión en el cliente.

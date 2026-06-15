@@ -28,6 +28,7 @@ from app.core.rate_limit import limiter
 # Importar todos los modelos para que Base.metadata los conozca.
 from app.models import (  # noqa: F401
     user,
+    auth_token,
     couple,
     category,
     transaction,

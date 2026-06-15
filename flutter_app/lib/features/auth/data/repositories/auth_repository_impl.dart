@@ -66,6 +66,42 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, void>> forgotPassword(String email) async {
+    try {
+      await remote.forgotPassword(email);
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    try {
+      await remote.resetPassword(
+        email: email,
+        code: code,
+        newPassword: newPassword,
+      );
+      return const Right(null);
+    } on DioException catch (e) {
+      // El backend devuelve 400 con detalle "Código inválido o expirado".
+      if (e.response?.statusCode == 400) {
+        return const Left(AuthFailure('Código inválido o expirado'));
+      }
+      return Left(_mapDioError(e));
+    } catch (e) {
+      return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<void> logout() async {
     final refreshToken = await storage.read(key: 'refresh_token');
     if (refreshToken != null) {

@@ -78,6 +78,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 onPressed: isLoading ? null : () => context.push('/register'),
                 child: const Text('¿No tienes cuenta? Regístrate'),
               ),
+              TextButton(
+                onPressed:
+                    isLoading ? null : () => context.push('/recuperar-password'),
+                child: const Text('¿Olvidaste tu contraseña?'),
+              ),
             ],
           ),
         ),

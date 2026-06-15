@@ -47,6 +47,21 @@ def hash_token(raw: str) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
+def generate_otp() -> tuple[str, str]:
+    """
+    Genera un código OTP de 6 dígitos para reset/verificación.
+    Devuelve (codigo_en_claro, hash). Solo el hash se guarda en DB;
+    el código en claro se envía por email.
+    """
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    return code, hash_token(code)
+
+
+def verify_otp(code: str, code_hash: str) -> bool:
+    """Comparación en tiempo constante para evitar timing attacks."""
+    return secrets.compare_digest(hash_token(code), code_hash)
+
+
 def decode_access_token(token: str, secret_key: str, algorithm: str) -> int | None:
     try:
         payload = jwt.decode(token, secret_key, algorithms=[algorithm])
