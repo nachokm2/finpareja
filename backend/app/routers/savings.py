@@ -59,7 +59,12 @@ async def add_contribution(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    g = await db.get(SavingGoal, goal_id)
+    # Lock pesimista (SELECT ... FOR UPDATE): serializa el read-modify-write
+    # de monto_actual para que dos aportes concurrentes no se pisen (lost update).
+    result = await db.execute(
+        select(SavingGoal).where(SavingGoal.id == goal_id).with_for_update()
+    )
+    g = result.scalar_one_or_none()
     if not g or g.usuario_id != current_user.id:
         raise HTTPException(status_code=404, detail="Meta no encontrada")
 

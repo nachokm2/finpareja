@@ -49,7 +49,12 @@ async def add_payment(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    d = await db.get(Debt, debt_id)
+    # Lock pesimista (SELECT ... FOR UPDATE): serializa el read-modify-write
+    # de monto_pendiente para que dos pagos concurrentes no se pisen.
+    result = await db.execute(
+        select(Debt).where(Debt.id == debt_id).with_for_update()
+    )
+    d = result.scalar_one_or_none()
     if not d or d.usuario_id != current_user.id:
         raise HTTPException(status_code=404, detail="Deuda no encontrada")
 
