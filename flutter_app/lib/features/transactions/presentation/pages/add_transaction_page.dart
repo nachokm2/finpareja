@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/core/ocr/receipt_scanner.dart';
+import 'package:flutter_app/core/security/biometric_service.dart';
 import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_app/core/utils/currency_formatter.dart';
 import 'package:flutter_app/features/categories/domain/entities/category_entity.dart';
@@ -67,7 +68,10 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _scanning = true);
     try {
-      final data = await ReceiptScanner().scanFromCamera();
+      // Evita que el bloqueo biométrico se active al abrir la cámara.
+      final data = await ref
+          .read(biometricServiceProvider)
+          .duringExternalActivity(() => ReceiptScanner().scanFromCamera());
       if (!mounted) return;
       setState(() => _scanning = false);
       if (data == null) return; // el usuario canceló la cámara

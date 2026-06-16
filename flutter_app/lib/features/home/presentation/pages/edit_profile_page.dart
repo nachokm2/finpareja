@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_app/core/network/dio_provider.dart';
+import 'package:flutter_app/core/security/biometric_service.dart';
 import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_app/core/widgets/user_avatar.dart';
 import 'package:flutter_app/features/couple/presentation/providers/couple_provider.dart';
@@ -35,12 +36,14 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   Future<void> _pickImage() async {
     try {
-      final file = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 70,
-      );
+      final file = await ref.read(biometricServiceProvider).duringExternalActivity(
+            () => ImagePicker().pickImage(
+              source: ImageSource.gallery,
+              maxWidth: 512,
+              maxHeight: 512,
+              imageQuality: 70,
+            ),
+          );
       if (file == null) return;
       final bytes = await file.readAsBytes();
       setState(() => _newAvatar = 'data:image/jpeg;base64,${base64Encode(bytes)}');

@@ -51,9 +51,13 @@ class _BiometricGateState extends ConsumerState<BiometricGate>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!_enabled) return;
-    // Re-bloquea solo al pasar a segundo plano real (no mientras se muestra el
-    // diálogo del sistema, que no llega a 'paused').
-    if (state == AppLifecycleState.paused && !_authInProgress) {
+    final service = ref.read(biometricServiceProvider);
+    // Re-bloquea solo al pasar a segundo plano real. NO cuando la propia app
+    // abrió cámara/galería/compartir (ignoreNextPause) ni mientras se muestra
+    // el diálogo del sistema (que no llega a 'paused').
+    if (state == AppLifecycleState.paused &&
+        !_authInProgress &&
+        !service.ignoreNextPause) {
       setState(() => _status = _GateStatus.locked);
     } else if (state == AppLifecycleState.resumed &&
         _status == _GateStatus.locked &&

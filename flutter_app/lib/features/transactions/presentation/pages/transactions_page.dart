@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/core/network/dio_provider.dart';
 import 'package:flutter_app/core/router/app_router.dart';
+import 'package:flutter_app/core/security/biometric_service.dart';
 import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_app/core/widgets/empty_state.dart';
 import 'package:flutter_app/core/widgets/error_retry.dart';
@@ -26,10 +27,13 @@ class TransactionsPage extends ConsumerWidget {
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/finpareja_transacciones.csv');
       await file.writeAsString(csv);
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'text/csv')],
-        subject: 'Mis transacciones - FinPareja',
-      );
+      // Evita que el bloqueo biométrico se active al abrir el menú de compartir.
+      await ref.read(biometricServiceProvider).duringExternalActivity(
+            () => Share.shareXFiles(
+              [XFile(file.path, mimeType: 'text/csv')],
+              subject: 'Mis transacciones - FinPareja',
+            ),
+          );
     } catch (_) {
       messenger.showSnackBar(
         const SnackBar(content: Text('No se pudo exportar')),

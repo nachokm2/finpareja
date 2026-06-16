@@ -15,6 +15,22 @@ class BiometricService {
 
   static const _key = 'biometric_lock_enabled';
 
+  /// Cuando es true, el bloqueo biométrico ignora el próximo paso a segundo
+  /// plano. Se usa al abrir cámara/galería/compartir desde la propia app, para
+  /// que al volver NO pida la huella (esa salida no es "salir de la app").
+  bool ignoreNextPause = false;
+
+  /// Ejecuta [action] (que abre una actividad externa: cámara, galería, share)
+  /// sin que el candado se active al volver.
+  Future<T> duringExternalActivity<T>(Future<T> Function() action) async {
+    ignoreNextPause = true;
+    try {
+      return await action();
+    } finally {
+      ignoreNextPause = false;
+    }
+  }
+
   Future<bool> isEnabled() async => (await _storage.read(key: _key)) == 'true';
 
   Future<void> setEnabled(bool value) =>
