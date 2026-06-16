@@ -5,6 +5,7 @@ from .couple import Couple, CoupleMember, CoupleInvitation
 from .settlement import Settlement
 from .category import Category
 from .transaction import Transaction
+from .recurring_transaction import RecurringTransaction
 from .budget import Budget
 from .saving_goal import SavingGoal, SavingGoalContribution
 from .debt import Debt, DebtPayment
@@ -18,6 +19,7 @@ __all__ = [
     "Settlement",
     "Category",
     "Transaction",
+    "RecurringTransaction",
     "Budget",
     "SavingGoal", "SavingGoalContribution",
     "Debt", "DebtPayment",

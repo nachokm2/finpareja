@@ -22,6 +22,7 @@ from .routers import (
     couples,
     categories,
     transactions,
+    recurring,
     budgets,
     savings,
     debts,
@@ -83,6 +84,7 @@ app.include_router(users.router, prefix="/usuarios", tags=["usuarios"])
 app.include_router(couples.router, prefix="/parejas", tags=["parejas"])
 app.include_router(categories.router, prefix="/categorias", tags=["categorias"])
 app.include_router(transactions.router, prefix="/transacciones", tags=["transacciones"])
+app.include_router(recurring.router, prefix="/recurrentes", tags=["recurrentes"])
 app.include_router(budgets.router, prefix="/presupuestos", tags=["presupuestos"])
 app.include_router(savings.router, prefix="/metas", tags=["metas"])
 app.include_router(debts.router, prefix="/deudas", tags=["deudas"])

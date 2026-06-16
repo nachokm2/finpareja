@@ -1,4 +1,8 @@
+import csv
+import io
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 
@@ -47,6 +51,48 @@ async def list_transactions(
     )).scalars().all()
 
     return TransactionListResponse(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.get("/export")
+async def export_transactions(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Exporta todas las transacciones del usuario en CSV (UTF-8 con BOM para que
+    Excel respete los acentos). Cumple el derecho de portabilidad de datos
+    (Ley 19.628). Declarado antes de /{tx_id} para que el ruteo no lo confunda.
+    """
+    rows = (await db.execute(
+        select(Transaction)
+        .where(Transaction.usuario_id == current_user.id)
+        .order_by(Transaction.fecha.asc(), Transaction.id.asc())
+    )).scalars().all()
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow([
+        "fecha", "tipo", "categoria", "monto", "moneda",
+        "descripcion", "compartido", "porcentaje_usuario",
+    ])
+    for t in rows:
+        writer.writerow([
+            t.fecha.isoformat(),
+            t.tipo,
+            t.category.nombre if t.category else "",
+            f"{t.monto}",
+            t.moneda,
+            t.descripcion or "",
+            "si" if t.es_compartido else "no",
+            f"{t.porcentaje_usuario}",
+        ])
+
+    content = "﻿" + buffer.getvalue()
+    return Response(
+        content=content,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="finpareja_transacciones.csv"'},
+    )
 
 
 @router.post("", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)

@@ -34,6 +34,7 @@ from app.models import (  # noqa: F401
     settlement,
     category,
     transaction,
+    recurring_transaction,
     budget,
     saving_goal,
     debt,
