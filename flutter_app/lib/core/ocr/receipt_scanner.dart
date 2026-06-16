@@ -71,12 +71,15 @@ class ReceiptScanner {
     );
   }
 
-  /// Todos los montos plausibles del documento, de mayor a menor (sin repetir).
-  /// Sirve para que el usuario elija el total si la detección automática falla.
+  // Monto "con formato de dinero": con signo $ o con separador de miles. Así NO
+  // confundimos RUT, folios, números de tarjeta, comprobantes o AID con el total.
+  static final RegExp _moneyRe =
+      RegExp(r'\$\s?\d[\d.,]*|\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?');
+
+  /// Montos con formato de dinero, de mayor a menor (para el selector manual).
   List<double> _allAmounts(String text) {
-    final re = RegExp(r'\d[\d.,]*');
     final set = <double>{};
-    for (final m in re.allMatches(text)) {
+    for (final m in _moneyRe.allMatches(text)) {
       final v = _toAmount(m.group(0)!);
       if (v != null && v >= 100 && v <= 99999999) set.add(v);
     }
@@ -85,32 +88,45 @@ class ReceiptScanner {
   }
 
   // ── Monto ──────────────────────────────────────────────────────────────
-  // Prioriza la línea que dice TOTAL (no SUBTOTAL); si no hay, toma el mayor
-  // monto del documento (en una boleta el total suele ser el número más grande).
+  // Prioriza la línea TOTAL (no SUBTOTAL), luego MONTO. La palabra puede venir
+  // cortada por el OCR (ej. "To tal"), por eso comparamos sin espacios. Si no
+  // hay ninguna, usa el mayor monto con formato de dinero del documento.
   double? _findTotal(List<String> lines, String text) {
-    double? fromTotalLine;
+    double? fromTotal;
+    double? fromMonto;
     for (final line in lines) {
-      final upper = line.toUpperCase();
-      final esTotal = upper.contains('TOTAL') &&
-          !upper.contains('SUBTOTAL') &&
-          !upper.contains('SUB TOTAL');
-      if (esTotal) {
-        final amt = _largestAmountIn(line);
-        if (amt != null) fromTotalLine = amt; // el último TOTAL suele ser el final
+      final norm = line.toUpperCase().replaceAll(' ', '');
+      if (norm.contains('SUBTOTAL')) continue;
+      if (norm.contains('TOTAL')) {
+        final amt = _amountInKeywordLine(line);
+        if (amt != null) fromTotal = amt; // el último TOTAL suele ser el final
+      } else if (norm.contains('MONTO')) {
+        final amt = _amountInKeywordLine(line);
+        if (amt != null) fromMonto = amt;
       }
     }
-    if (fromTotalLine != null) return fromTotalLine;
-    return _largestAmountIn(text);
+    return fromTotal ?? fromMonto ?? _largestMoneyIn(text);
   }
 
-  /// Mayor monto encontrado en un texto. Ignora números muy pequeños (≤ 100)
-  /// para no confundir cantidades, folios o RUT con el total.
-  double? _largestAmountIn(String s) {
-    final re = RegExp(r'\$?\s*\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{1,2})?|\d{4,}');
+  /// Monto en una línea con TOTAL/MONTO: primero con formato de dinero; si no
+  /// hay, el mayor número de 3+ dígitos (la palabra clave ya da el contexto).
+  double? _amountInKeywordLine(String line) {
+    final money = _largestMoneyIn(line);
+    if (money != null) return money;
     double? best;
-    for (final m in re.allMatches(s)) {
+    for (final m in RegExp(r'\d{3,}').allMatches(line)) {
+      final v = double.tryParse(m.group(0)!);
+      if (v != null && v >= 100 && (best == null || v > best)) best = v;
+    }
+    return best;
+  }
+
+  /// Mayor monto con formato de dinero ($ o separador de miles) del texto.
+  double? _largestMoneyIn(String s) {
+    double? best;
+    for (final m in _moneyRe.allMatches(s)) {
       final v = _toAmount(m.group(0)!);
-      if (v != null && v > 100 && (best == null || v > best)) best = v;
+      if (v != null && v >= 100 && (best == null || v > best)) best = v;
     }
     return best;
   }
