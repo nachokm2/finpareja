@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from: str = "FinPareja <no-reply@finpareja.cl>"
 
+    # Observabilidad. SENTRY_DSN vacío = Sentry desactivado (dev). LOG_JSON
+    # controla el formato: JSON en producción (Railway lo indexa), legible en dev.
+    sentry_dsn: str = ""
+    log_level: str = "INFO"
+    log_json: bool = True
+
     # CORS — se declara como STRING crudo (no list[str]) a propósito.
     # pydantic-settings intenta json.loads() sobre campos de tipo lista ANTES
     # de cualquier validador, y "*" o CSV no son JSON válido → crashea el arranque.

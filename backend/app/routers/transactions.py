@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 
+from ..core.audit import record_audit
 from ..dependencies import get_db, get_current_user, assert_couple_member
 from ..models.user import User
 from ..models.transaction import Transaction
@@ -97,11 +98,17 @@ async def update_transaction(
 @router.delete("/{tx_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_transaction(
     tx_id: int,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     tx = await db.get(Transaction, tx_id)
     if not tx or tx.usuario_id != current_user.id:
         raise HTTPException(status_code=404, detail="Transacción no encontrada")
+    await record_audit(
+        db, accion="transaction.delete", usuario_id=current_user.id,
+        entidad="transaccion", entidad_id=tx.id,
+        detalle=f"tipo={tx.tipo} monto={tx.monto}", request=request,
+    )
     await db.delete(tx)
     await db.commit()

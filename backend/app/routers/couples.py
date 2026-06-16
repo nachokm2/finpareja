@@ -2,10 +2,11 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
+from ..core.audit import record_audit
 from ..dependencies import get_db, get_current_user
 from ..models.user import User
 from ..models.couple import Couple, CoupleMember, CoupleInvitation
@@ -38,23 +39,6 @@ async def _partner_id(db: AsyncSession, pareja_id: int, user_id: int) -> int | N
         )
     )).scalars().all()
     return rows[0] if rows else None
-
-
-async def _net_worth_for(db: AsyncSession, usuario_id: int) -> tuple[Decimal, Decimal]:
-    """Devuelve (ingresos_acumulados, gastos_acumulados) de un usuario."""
-    rows = (await db.execute(
-        select(Transaction.tipo, func.coalesce(func.sum(Transaction.monto), Decimal("0")).label("total"))
-        .where(Transaction.usuario_id == usuario_id)
-        .group_by(Transaction.tipo)
-    )).all()
-    ingresos = Decimal("0")
-    gastos = Decimal("0")
-    for tipo, total in rows:
-        if tipo == "ingreso":
-            ingresos = total
-        else:
-            gastos = total
-    return ingresos, gastos
 
 
 def _to_response(couple: Couple, member_count: int) -> CoupleResponse:
@@ -160,12 +144,37 @@ async def couple_summary(
     members = (await db.execute(
         select(CoupleMember).where(CoupleMember.pareja_id == membership.pareja_id)
     )).scalars().all()
+    member_ids = [m.usuario_id for m in members]
+
+    # Anti N+1 (PERF-01): en vez de una consulta por miembro, traemos todos los
+    # usuarios y todos los agregados de ingresos/gastos en 2 consultas totales.
+    users_by_id = {
+        u.id: u for u in (await db.execute(
+            select(User).where(User.id.in_(member_ids))
+        )).scalars().all()
+    }
+
+    agg_rows = (await db.execute(
+        select(
+            Transaction.usuario_id,
+            Transaction.tipo,
+            func.coalesce(func.sum(Transaction.monto), Decimal("0")),
+        )
+        .where(Transaction.usuario_id.in_(member_ids))
+        .group_by(Transaction.usuario_id, Transaction.tipo)
+    )).all()
+    totals: dict[int, dict[str, Decimal]] = {
+        uid: {"ingreso": Decimal("0"), "gasto": Decimal("0")} for uid in member_ids
+    }
+    for uid, tipo, total in agg_rows:
+        totals[uid][tipo] = total
 
     miembros_data = []
     patrimonio_total = Decimal("0")
     for m in members:
-        user = await db.get(User, m.usuario_id)
-        ingresos, gastos = await _net_worth_for(db, m.usuario_id)
+        user = users_by_id.get(m.usuario_id)
+        ingresos = totals[m.usuario_id]["ingreso"]
+        gastos = totals[m.usuario_id]["gasto"]
         patrimonio = ingresos - gastos
         patrimonio_total += patrimonio
         miembros_data.append({
@@ -278,6 +287,7 @@ async def couple_balance(
 @router.post("/liquidar", response_model=SettlementResponse, status_code=status.HTTP_201_CREATED)
 async def settle(
     body: SettleRequest,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -299,6 +309,13 @@ async def settle(
         fecha=body.fecha,
     )
     db.add(settlement)
+    await db.flush()
+    await record_audit(
+        db, accion="settlement.create", usuario_id=current_user.id,
+        entidad="liquidacion", entidad_id=settlement.id,
+        detalle=f"pareja={membership.pareja_id} receptor={other_id}",
+        request=request,
+    )
     await db.commit()
     await db.refresh(settlement)
     return settlement

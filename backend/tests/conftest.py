@@ -29,6 +29,7 @@ from app.core.rate_limit import limiter
 from app.models import (  # noqa: F401
     user,
     auth_token,
+    audit_log,
     couple,
     settlement,
     category,

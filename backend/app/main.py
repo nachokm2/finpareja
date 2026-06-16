@@ -9,6 +9,12 @@ from sqlalchemy import text
 
 from .config import get_settings
 from .core.rate_limit import limiter
+from .core.observability import (
+    RequestContextMiddleware,
+    configure_logging,
+    init_sentry,
+    request_id_ctx,
+)
 from .database import engine
 from .routers import (
     auth,
@@ -24,7 +30,13 @@ from .routers import (
 )
 
 settings = get_settings()
+
+# Observabilidad: configura logging estructurado antes de cualquier log y
+# arranca Sentry si hay DSN (opt-in).
+configure_logging(level=settings.log_level, json_logs=settings.log_json)
 logger = logging.getLogger("finpareja")
+if init_sentry(settings.sentry_dsn, settings.app_env, release="finpareja@1.0.0"):
+    logger.info("Sentry activado para entorno %s", settings.app_env)
 
 app = FastAPI(
     title=settings.app_name,
@@ -36,6 +48,9 @@ app = FastAPI(
 # Rate limiting (SEC-04): registra el limiter y el handler de 429.
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Correlación de requests + log de acceso (debe envolver al resto).
+app.add_middleware(RequestContextMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -55,9 +70,11 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     detail = "Error interno del servidor"
     if settings.debug:
         detail = f"{type(exc).__name__}: {exc}"
+    rid = request_id_ctx.get()
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": detail},
+        content={"detail": detail, "request_id": rid},
+        headers={"X-Request-ID": rid},
     )
 
 

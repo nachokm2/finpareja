@@ -6,6 +6,7 @@ from sqlalchemy import select
 
 from ..dependencies import get_db, get_current_user
 from ..config import get_settings
+from ..core.audit import record_audit
 from ..core.email import send_otp_email
 from ..core.rate_limit import limiter
 from ..core.security import (
@@ -103,6 +104,7 @@ async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends
         device_info=request.headers.get("user-agent"),
         expires_at=datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days),
     ))
+    await record_audit(db, accion="login", usuario_id=user.id, request=request)
     await db.commit()
     return TokenResponse(access_token=access, refresh_token=raw_refresh)
 
@@ -221,6 +223,10 @@ async def reset_password(
     now = datetime.now(timezone.utc)
     for s in sessions.scalars().all():
         s.revoked_at = now
+    await record_audit(
+        db, accion="password_reset", usuario_id=user.id,
+        detalle="reset vía OTP; sesiones revocadas", request=request,
+    )
     await db.commit()
     return {"message": "Contraseña actualizada. Inicia sesión nuevamente."}
 
