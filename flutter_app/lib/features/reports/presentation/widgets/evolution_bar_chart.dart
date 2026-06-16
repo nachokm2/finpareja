@@ -23,6 +23,12 @@ class EvolutionBarChart extends StatelessWidget {
     // Margen superior del 20% para que la barra más alta no toque el techo.
     final maxY = maxValue == 0 ? 100.0 : maxValue * 1.2;
 
+    // Piso visual: una barra con valor > 0 nunca se dibuja más corta que esto,
+    // así los montos pequeños siguen siendo visibles. El monto REAL se conserva
+    // y es el que se muestra en el tooltip (ver getTooltipItem).
+    final minVisible = maxValue == 0 ? 0.0 : maxY * 0.05;
+    double rodY(double v) => v <= 0 ? 0 : (v < minVisible ? minVisible : v);
+
     return Column(
       children: [
         // Leyenda
@@ -44,8 +50,12 @@ class EvolutionBarChart extends StatelessWidget {
               barTouchData: BarTouchData(
                 touchTooltipData: BarTouchTooltipData(
                   getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    // Mostramos el monto REAL (no el ajustado por el piso visual).
+                    final p = points[group.x];
+                    final real = rodIndex == 0 ? p.ingresos : p.gastos;
+                    final label = rodIndex == 0 ? 'Ingresos' : 'Gastos';
                     return BarTooltipItem(
-                      CurrencyFormatter.compact(rod.toY),
+                      '$label\n${CurrencyFormatter.format(real)}',
                       const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -92,20 +102,31 @@ class EvolutionBarChart extends StatelessWidget {
                 for (var i = 0; i < points.length; i++)
                   BarChartGroupData(
                     x: i,
+                    barsSpace: 4,
                     barRods: [
                       BarChartRodData(
-                        toY: points[i].ingresos,
+                        toY: rodY(points[i].ingresos),
                         color: _incomeColor,
-                        width: 8,
+                        width: 10,
                         borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(4)),
+                        backDrawRodData: BackgroundBarChartRodData(
+                          show: true,
+                          toY: maxY,
+                          color: _incomeColor.withAlpha(20),
+                        ),
                       ),
                       BarChartRodData(
-                        toY: points[i].gastos,
+                        toY: rodY(points[i].gastos),
                         color: _expenseColor,
-                        width: 8,
+                        width: 10,
                         borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(4)),
+                        backDrawRodData: BackgroundBarChartRodData(
+                          show: true,
+                          toY: maxY,
+                          color: _expenseColor.withAlpha(20),
+                        ),
                       ),
                     ],
                   ),
