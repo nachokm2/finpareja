@@ -33,6 +33,7 @@ class CoupleRemoteDataSource {
       return CoupleMemberSummary(
         usuarioId: mm['usuario_id'] as int,
         nombre: mm['nombre'] as String? ?? 'Usuario',
+        avatar: mm['avatar'] as String?,
         rol: mm['rol'] as String? ?? 'member',
         ingresos: NumParser.toDouble(mm['ingresos']),
         gastos: NumParser.toDouble(mm['gastos']),

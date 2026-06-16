@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Boolean, DateTime, ForeignKey, func
+from sqlalchemy import String, Boolean, DateTime, ForeignKey, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import Base
@@ -19,7 +19,8 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     phone_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Puede ser una URL o una imagen embebida en base64 (data URI), por eso Text.
+    avatar_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     currency: Mapped[str] = mapped_column(String(3), default="CLP", nullable=False)
     locale: Mapped[str] = mapped_column(String(10), default="es-CL", nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

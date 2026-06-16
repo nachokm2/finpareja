@@ -57,6 +57,7 @@ class SavingsPage extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -301,6 +302,7 @@ class _GoalCard extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -308,7 +310,8 @@ class _GoalCard extends StatelessWidget {
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(ctx).viewInsets.bottom +
-              MediaQuery.of(ctx).viewPadding.bottom,
+              MediaQuery.of(ctx).viewPadding.bottom +
+              16,
           left: 20,
           right: 20,
           top: 20,
@@ -362,10 +365,12 @@ class _GoalCard extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(ctx).viewInsets.bottom +
-              MediaQuery.of(ctx).viewPadding.bottom,
+              MediaQuery.of(ctx).viewPadding.bottom +
+              16,
           left: 16,
           right: 16,
           top: 16,

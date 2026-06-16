@@ -22,15 +22,13 @@ class ProfileViewData {
         ? user.email.split('@').first
         : user.fullName.trim();
 
-    final avatar = user.avatarUrl.trim().isNotEmpty
-        ? user.avatarUrl
-        : 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(displayName)}&background=4C4DDC&color=fff&bold=true';
-
+    // avatarUrl se entrega crudo (puede ser data URI base64, URL o vacío);
+    // el widget UserAvatar resuelve el fallback con la inicial del nombre.
     return ProfileViewData(
       name: displayName,
       email: user.email,
       phone: user.phoneNumber.trim(),
-      avatarUrl: avatar,
+      avatarUrl: user.avatarUrl.trim(),
       isActive: user.isActive,
     );
   }

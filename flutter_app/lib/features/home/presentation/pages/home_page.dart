@@ -4,6 +4,7 @@ import 'package:flutter_app/core/security/biometric_service.dart';
 import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_app/features/auth/presentation/notifiers/auth_notifier.dart';
 import 'package:flutter_app/features/home/presentation/mappers/profile_view_data.dart';
+import 'package:flutter_app/features/home/presentation/pages/edit_profile_page.dart';
 import 'package:flutter_app/features/home/presentation/providers/profile_provider.dart';
 import 'package:flutter_app/features/home/presentation/widgets/contact_card.dart';
 import 'package:flutter_app/features/home/presentation/widgets/profile_card.dart';
@@ -28,6 +29,13 @@ class HomePage extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Mi Perfil'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Editar perfil',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const EditProfilePage()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Cerrar sesión',

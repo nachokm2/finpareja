@@ -8,10 +8,12 @@ class CoupleMemberSummary {
     required this.gastos,
     required this.patrimonio,
     required this.porcentaje,
+    this.avatar,
   });
 
   final int usuarioId;
   final String nombre;
+  final String? avatar;
   final String rol;
   final double ingresos;
   final double gastos;

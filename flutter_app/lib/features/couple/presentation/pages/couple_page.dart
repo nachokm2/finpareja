@@ -3,6 +3,7 @@ import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_app/core/utils/currency_formatter.dart';
 import 'package:flutter_app/core/widgets/animated_count.dart';
 import 'package:flutter_app/core/widgets/error_retry.dart';
+import 'package:flutter_app/core/widgets/user_avatar.dart';
 import 'package:flutter_app/features/couple/domain/entities/couple_balance.dart';
 import 'package:flutter_app/features/couple/domain/entities/couple_summary.dart';
 import 'package:flutter_app/features/couple/presentation/providers/couple_provider.dart';
@@ -281,18 +282,10 @@ class _MemberRow extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 12,
-                  backgroundColor: color.withAlpha(40),
-                  child: Text(
-                    member.nombre.isNotEmpty
-                        ? member.nombre[0].toUpperCase()
-                        : '?',
-                    style: TextStyle(
-                        color: color,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700),
-                  ),
+                UserAvatar(
+                  name: member.nombre,
+                  url: member.avatar,
+                  radius: 14,
                 ),
                 const SizedBox(width: 8),
                 Text(member.nombre,

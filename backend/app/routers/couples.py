@@ -181,6 +181,7 @@ async def couple_summary(
         miembros_data.append({
             "usuario_id": m.usuario_id,
             "nombre": user.full_name if user else "Usuario",
+            "avatar": user.avatar_url if user else None,
             "rol": m.rol,
             "ingresos": ingresos,
             "gastos": gastos,

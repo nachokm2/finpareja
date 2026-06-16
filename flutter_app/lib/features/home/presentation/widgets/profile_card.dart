@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter_app/core/theme/app_theme.dart';
+import 'package:flutter_app/core/widgets/user_avatar.dart';
 import 'package:flutter_app/features/home/presentation/mappers/profile_view_data.dart';
 
 class ProfileCard extends StatelessWidget {
@@ -29,10 +30,7 @@ class ProfileCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 36,
-            backgroundImage: NetworkImage(data.avatarUrl),
-          ),
+          UserAvatar(name: data.name, url: data.avatarUrl, radius: 36),
           const SizedBox(width: 16),
           Expanded(
             child: Column(

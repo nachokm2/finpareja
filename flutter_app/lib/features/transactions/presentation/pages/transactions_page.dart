@@ -81,7 +81,7 @@ class TransactionsPage extends ConsumerWidget {
                 final tx = transactions[index];
                 return TransactionCard(
                   transaction: tx,
-                  onTap: () => Navigator.of(context).push(
+                  onTap: () => Navigator.of(context, rootNavigator: true).push(
                     MaterialPageRoute<void>(
                       builder: (_) => AddTransactionPage(transaction: tx),
                     ),
