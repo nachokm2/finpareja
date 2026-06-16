@@ -8,6 +8,7 @@ class ReceiptData {
     this.monto,
     this.fecha,
     this.comercio,
+    this.categoriaSugerida,
     this.candidates = const [],
     required this.rawText,
   });
@@ -15,6 +16,7 @@ class ReceiptData {
   final double? monto; // mejor estimación del total
   final DateTime? fecha;
   final String? comercio;
+  final String? categoriaSugerida; // nombre de categoría sugerido por keywords
   final List<double> candidates; // todos los montos detectados (mayor a menor)
   final String rawText;
 
@@ -66,9 +68,70 @@ class ReceiptScanner {
       monto: _findTotal(lines, text),
       fecha: _findDate(text),
       comercio: _findMerchant(lines),
+      categoriaSugerida: _suggestCategory(text),
       candidates: _allAmounts(text),
       rawText: text,
     );
+  }
+
+  // ── Categoría sugerida ───────────────────────────────────────────────────
+  // Mapea palabras clave del texto a una categoría de gasto del sistema.
+  // El orden importa: la primera coincidencia gana.
+  static const Map<String, List<String>> _categoryKeywords = {
+    'Restaurantes': [
+      'pasteler', 'panaderia', 'cafe', 'cafeteria', 'restaurant', 'sushi',
+      'pizza', 'burger', 'mcdonald', 'kfc', 'doggis', 'heladeria', 'comida',
+    ],
+    'Alimentación': [
+      'supermercado', 'jumbo', 'lider', 'tottus', 'unimarc', 'santa isabel',
+      'acuenta', 'mayorista', 'almacen', 'minimarket', 'verduleria', 'carniceria',
+    ],
+    'Transporte': [
+      'bencina', 'combustible', 'copec', 'shell', 'petrobras', 'aramco',
+      'estacionamiento', 'parking', 'uber', 'cabify', 'didi', 'peaje',
+      'autopista', 'automotriz', 'neumatico', 'lubricentro',
+    ],
+    'Salud': [
+      'farmacia', 'cruz verde', 'salcobrand', 'ahumada', 'clinica', 'hospital',
+      'dental', 'dentista', 'optica', 'laboratorio',
+    ],
+    'Servicios básicos': [
+      'enel', 'cge', 'aguas andinas', 'movistar', 'entel', 'claro', 'vtr',
+      'internet',
+    ],
+    'Tecnología': ['pc factory', 'spdigital', 'computacion', 'electronica'],
+    'Ropa y calzado': [
+      'falabella', 'ripley', 'hites', 'calzado', 'zapatos', 'vestuario', 'zara',
+    ],
+    'Entretenimiento': [
+      'cine', 'cinemark', 'cinepolis', 'netflix', 'spotify', 'teatro',
+    ],
+    'Mascotas': ['veterinaria', 'mascota', 'petshop'],
+    'Cuidado personal': ['peluqueria', 'barberia', 'spa', 'manicure'],
+    'Deporte': ['gimnasio', 'sportlife', 'smartfit'],
+    'Vivienda': ['sodimac', 'easy', 'construmart', 'ferreteria', 'homecenter'],
+    'Viajes': ['latam', 'jetsmart', 'sky airline', 'hotel', 'hostal', 'turismo'],
+  };
+
+  String? _suggestCategory(String text) {
+    final t = _normalize(text);
+    for (final entry in _categoryKeywords.entries) {
+      for (final kw in entry.value) {
+        if (t.contains(kw)) return entry.key;
+      }
+    }
+    return null;
+  }
+
+  /// Minúsculas sin acentos, para comparar palabras clave de forma robusta.
+  String _normalize(String s) {
+    s = s.toLowerCase();
+    const from = 'áéíóúüñ';
+    const to = 'aeiouun';
+    for (var i = 0; i < from.length; i++) {
+      s = s.replaceAll(from[i], to[i]);
+    }
+    return s;
   }
 
   // Monto "con formato de dinero": con signo $ o con separador de miles. Así NO
@@ -167,17 +230,24 @@ class ReceiptScanner {
   }
 
   // ── Comercio ───────────────────────────────────────────────────────────
-  // Heurística simple: la primera línea "con sentido" (letras, sin ser un
-  // encabezado de monto/fecha) suele ser el nombre del local.
+  // Toma la primera línea "con sentido" descartando marcas de terminal de pago
+  // (Getnet/Transbank) y texto de encabezado (boleta, rut, total, dirección…).
+  static const List<String> _merchantSkip = [
+    'getnet', 'transbank', 'redcompra', 'red compra', 'boleta', 'factura',
+    'valido', 'como', 'rut', 'iva', 'total', 'monto', 'subtotal', 'tarjeta',
+    'visa', 'mastercard', 'debito', 'credito', 'aid', 'aprobacion',
+    'comprobante', 'copia', 'comercio', 'cliente', 'fecha', 'hora', 'www',
+    'http', 'giro', 'direccion',
+  ];
+
   String? _findMerchant(List<String> lines) {
-    for (final line in lines.take(5)) {
-      final letras = line.replaceAll(RegExp(r'[^A-Za-zÁÉÍÓÚáéíóúÑñ ]'), '').trim();
-      if (letras.length >= 3 &&
-          !line.toUpperCase().contains('BOLETA') &&
-          !line.toUpperCase().contains('FACTURA')) {
-        // Limita el largo para que sea una descripción razonable.
-        return letras.length > 40 ? letras.substring(0, 40) : letras;
-      }
+    for (final line in lines.take(8)) {
+      final norm = _normalize(line);
+      final letras =
+          line.replaceAll(RegExp(r'[^A-Za-zÁÉÍÓÚáéíóúÑñ ]'), '').trim();
+      if (letras.length < 4) continue;
+      if (_merchantSkip.any((k) => norm.contains(k))) continue;
+      return letras.length > 40 ? letras.substring(0, 40) : letras;
     }
     return null;
   }

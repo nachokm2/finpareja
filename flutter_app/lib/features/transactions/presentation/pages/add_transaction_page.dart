@@ -161,6 +161,16 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                   style: const TextStyle(color: Colors.grey, fontSize: 13),
                 ),
               ],
+              if (data.comercio != null) ...[
+                const SizedBox(height: 8),
+                Text('Comercio: ${data.comercio}',
+                    style: const TextStyle(color: Colors.grey, fontSize: 13)),
+              ],
+              if (data.categoriaSugerida != null) ...[
+                const SizedBox(height: 8),
+                Text('Categoría sugerida: ${data.categoriaSugerida}',
+                    style: const TextStyle(color: Colors.grey, fontSize: 13)),
+              ],
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
@@ -178,6 +188,17 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                           _descCtrl.text.trim().isEmpty) {
                         _descCtrl.text = data.comercio!;
                         _descripcion = data.comercio;
+                      }
+                      // Asocia la categoría sugerida si existe en las del usuario.
+                      if (data.categoriaSugerida != null) {
+                        final cats =
+                            ref.read(gastoCategoriesProvider).valueOrNull;
+                        final match = cats?.where((c) =>
+                            c.nombre.toLowerCase() ==
+                            data.categoriaSugerida!.toLowerCase());
+                        if (match != null && match.isNotEmpty) {
+                          _selectedCategory = match.first;
+                        }
                       }
                     });
                   },
