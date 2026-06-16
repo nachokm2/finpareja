@@ -69,28 +69,16 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
     try {
       final data = await ReceiptScanner().scanFromCamera();
       if (!mounted) return;
-      if (data == null) {
-        setState(() => _scanning = false); // usuario canceló la cámara
+      setState(() => _scanning = false);
+      if (data == null) return; // el usuario canceló la cámara
+      if (data.rawText.trim().isEmpty) {
+        messenger.showSnackBar(const SnackBar(
+          content: Text(
+              'No se reconoció texto. Prueba con más luz y la boleta plana.'),
+        ));
         return;
       }
-      setState(() {
-        _scanning = false;
-        if (data.monto != null) {
-          _tipo = 'gasto';
-          _monto = data.monto!.toInt().toString();
-        }
-        if (data.fecha != null) _fecha = data.fecha!;
-        final descActual = _descCtrl.text.trim();
-        if (data.comercio != null && descActual.isEmpty) {
-          _descCtrl.text = data.comercio!;
-          _descripcion = data.comercio;
-        }
-      });
-      messenger.showSnackBar(SnackBar(
-        content: Text(data.monto != null
-            ? 'Monto detectado: revísalo antes de guardar'
-            : 'No detectamos el monto, ingrésalo manualmente'),
-      ));
+      await _showReceiptReview(data);
     } catch (_) {
       if (!mounted) return;
       setState(() => _scanning = false);
@@ -98,6 +86,129 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
         const SnackBar(content: Text('No se pudo leer la boleta')),
       );
     }
+  }
+
+  /// Hoja de revisión tras escanear: muestra los montos detectados para que el
+  /// usuario elija/corrija el total, y un acceso al texto crudo (diagnóstico).
+  Future<void> _showReceiptReview(ReceiptData data) async {
+    final montoCtrl = TextEditingController(
+      text: data.monto != null
+          ? data.monto!.toInt().toString()
+          : (data.candidates.isNotEmpty
+              ? data.candidates.first.toInt().toString()
+              : ''),
+    );
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom +
+              MediaQuery.of(ctx).viewPadding.bottom +
+              16,
+          left: 20,
+          right: 20,
+          top: 20,
+        ),
+        child: StatefulBuilder(
+          builder: (ctx, setSheet) => Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Revisa el gasto de la boleta',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+              const SizedBox(height: 6),
+              Text(
+                data.candidates.isEmpty
+                    ? 'No detectamos montos. Escríbelo abajo o míralo en "Ver texto leído".'
+                    : 'Toca el total correcto o escríbelo.',
+                style: const TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: montoCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                    labelText: 'Monto total', prefixText: '\$ '),
+              ),
+              if (data.candidates.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: data.candidates.take(8).map((c) {
+                    return ActionChip(
+                      label: Text(CurrencyFormatter.format(c)),
+                      onPressed: () =>
+                          setSheet(() => montoCtrl.text = c.toInt().toString()),
+                    );
+                  }).toList(),
+                ),
+              ],
+              if (data.fecha != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Fecha detectada: ${data.fecha!.day}/${data.fecha!.month}/${data.fecha!.year}',
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+              ],
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final monto = double.tryParse(montoCtrl.text);
+                    Navigator.pop(ctx);
+                    setState(() {
+                      _tipo = 'gasto';
+                      if (monto != null && monto > 0) {
+                        _monto = monto.toInt().toString();
+                      }
+                      if (data.fecha != null) _fecha = data.fecha!;
+                      if (data.comercio != null &&
+                          _descCtrl.text.trim().isEmpty) {
+                        _descCtrl.text = data.comercio!;
+                        _descripcion = data.comercio;
+                      }
+                    });
+                  },
+                  child: const Text('Usar estos datos'),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Center(
+                child: TextButton(
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text('Texto leído'),
+                      content: SingleChildScrollView(
+                        child: SelectableText(
+                          data.rawText.isEmpty ? '(vacío)' : data.rawText,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cerrar'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  child: const Text('Ver texto leído'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _appendDigit(String digit) {

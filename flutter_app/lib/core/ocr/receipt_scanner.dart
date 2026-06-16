@@ -4,11 +4,18 @@ import 'package:image_picker/image_picker.dart';
 /// Datos extraídos de una boleta. Cualquier campo puede ser null si no se pudo
 /// detectar; el usuario siempre revisa/corrige antes de guardar.
 class ReceiptData {
-  const ReceiptData({this.monto, this.fecha, this.comercio, required this.rawText});
+  const ReceiptData({
+    this.monto,
+    this.fecha,
+    this.comercio,
+    this.candidates = const [],
+    required this.rawText,
+  });
 
-  final double? monto;
+  final double? monto; // mejor estimación del total
   final DateTime? fecha;
   final String? comercio;
+  final List<double> candidates; // todos los montos detectados (mayor a menor)
   final String rawText;
 
   bool get isEmpty => monto == null && fecha == null && comercio == null;
@@ -59,8 +66,22 @@ class ReceiptScanner {
       monto: _findTotal(lines, text),
       fecha: _findDate(text),
       comercio: _findMerchant(lines),
+      candidates: _allAmounts(text),
       rawText: text,
     );
+  }
+
+  /// Todos los montos plausibles del documento, de mayor a menor (sin repetir).
+  /// Sirve para que el usuario elija el total si la detección automática falla.
+  List<double> _allAmounts(String text) {
+    final re = RegExp(r'\d[\d.,]*');
+    final set = <double>{};
+    for (final m in re.allMatches(text)) {
+      final v = _toAmount(m.group(0)!);
+      if (v != null && v >= 100 && v <= 99999999) set.add(v);
+    }
+    final list = set.toList()..sort((a, b) => b.compareTo(a));
+    return list;
   }
 
   // ── Monto ──────────────────────────────────────────────────────────────
