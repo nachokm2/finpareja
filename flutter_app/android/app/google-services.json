@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "380793881790",
+    "project_id": "finpareja-a87ec",
+    "storage_bucket": "finpareja-a87ec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:380793881790:android:56a1549c6f79fbbac84aef",
+        "android_client_info": {
+          "package_name": "cl.finpareja.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6NoKYjs1GR7CBt2qMHPYMl9yJ-tUvWPE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
