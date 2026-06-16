@@ -42,12 +42,15 @@ class BudgetsPage extends ConsumerWidget {
               message: 'Sin presupuestos este mes.\nCrea uno para controlar tus gastos por categoría',
             );
           }
+          final alertas = budgets.where((b) => b.alertaActiva).toList();
           return RefreshIndicator(
             onRefresh: () => ref.read(budgetsProvider.notifier).refresh(),
-            child: ListView.builder(
+            child: ListView(
               padding: const EdgeInsets.all(16),
-              itemCount: budgets.length,
-              itemBuilder: (_, i) => _BudgetCard(budget: budgets[i]),
+              children: [
+                if (alertas.isNotEmpty) _AlertsBanner(alertas: alertas),
+                ...budgets.map((b) => _BudgetCard(budget: b)),
+              ],
             ),
           );
         },
@@ -227,6 +230,57 @@ class _CategoryChip extends StatelessWidget {
             fontSize: 13,
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Aviso visible cuando uno o más presupuestos alcanzaron su umbral de alerta.
+/// Es la cara visible de las alertas de presupuesto (FIN-04).
+class _AlertsBanner extends StatelessWidget {
+  const _AlertsBanner({required this.alertas});
+  final List<BudgetEntity> alertas;
+
+  @override
+  Widget build(BuildContext context) {
+    final excedidos = alertas.where((b) => b.excedido).length;
+    final titulo = excedidos > 0
+        ? 'Superaste ${excedidos == 1 ? 'un presupuesto' : '$excedidos presupuestos'}'
+        : 'Te acercas al límite de ${alertas.length == 1 ? 'un presupuesto' : '${alertas.length} presupuestos'}';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF4E5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF59E0B)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titulo,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF92400E),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Revisa tus gastos para no pasarte este mes.',
+                  style: TextStyle(fontSize: 12, color: Colors.brown.shade700),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

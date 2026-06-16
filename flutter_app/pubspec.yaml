@@ -13,6 +13,7 @@ dependencies:
   flutter_riverpod: ^2.4.0
   dio: ^5.4.0
   flutter_secure_storage: ^9.0.0
+  local_auth: ^2.3.0
   form_field_validator: ^1.1.0
   json_annotation: ^4.8.0
   material_symbols_icons: ^4.2874.0

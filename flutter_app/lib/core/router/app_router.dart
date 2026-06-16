@@ -12,6 +12,7 @@ import 'package:flutter_app/features/dashboard/presentation/pages/dashboard_page
 import 'package:flutter_app/features/debts/presentation/pages/debts_page.dart';
 import 'package:flutter_app/features/home/presentation/pages/home_page.dart';
 import 'package:flutter_app/features/investments/presentation/pages/investments_page.dart';
+import 'package:flutter_app/features/legal/presentation/pages/privacy_policy_page.dart';
 import 'package:flutter_app/features/reports/presentation/pages/reports_page.dart';
 import 'package:flutter_app/features/savings/presentation/pages/savings_page.dart';
 import 'package:flutter_app/features/transactions/presentation/pages/add_transaction_page.dart';
@@ -39,6 +40,7 @@ abstract class AppRoutes {
   static const debts = '/deudas';
   static const investments = '/inversiones';
   static const couple = '/pareja';
+  static const privacy = '/privacidad';
 }
 
 /// Puente entre Riverpod y GoRouter.
@@ -115,6 +117,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.couple,
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __) => const CouplePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.privacy,
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const PrivacyPolicyPage(),
       ),
 
       // ── Shell con bottom navigation (4 ramas) ───────────────────────

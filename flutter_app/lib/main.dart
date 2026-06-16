@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/core/router/app_router.dart';
+import 'package:flutter_app/core/security/biometric_gate.dart';
 import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +23,8 @@ class MyApp extends ConsumerWidget {
       title: 'FinPareja',
       theme: AppTheme.light(),
       routerConfig: router,
+      // Capa de bloqueo biométrico (opt-in) por encima de toda la app.
+      builder: (context, child) => BiometricGate(child: child ?? const SizedBox.shrink()),
       debugShowCheckedModeBanner: false,
       locale: const Locale('es', 'CL'),
       supportedLocales: const [Locale('es', 'CL'), Locale('es')],
