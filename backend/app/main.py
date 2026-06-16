@@ -28,6 +28,7 @@ from .routers import (
     debts,
     investments,
     reports,
+    devices,
 )
 
 settings = get_settings()
@@ -90,6 +91,7 @@ app.include_router(savings.router, prefix="/metas", tags=["metas"])
 app.include_router(debts.router, prefix="/deudas", tags=["deudas"])
 app.include_router(investments.router, prefix="/inversiones", tags=["inversiones"])
 app.include_router(reports.router, prefix="/reportes", tags=["reportes"])
+app.include_router(devices.router, prefix="/dispositivos", tags=["dispositivos"])
 
 
 @app.get("/health", tags=["health"])

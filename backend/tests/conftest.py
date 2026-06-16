@@ -30,6 +30,7 @@ from app.models import (  # noqa: F401
     user,
     auth_token,
     audit_log,
+    device_token,
     couple,
     settlement,
     category,

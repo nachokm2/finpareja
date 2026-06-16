@@ -1,6 +1,7 @@
 from .user import User, RefreshToken
 from .auth_token import AuthToken
 from .audit_log import AuditLog
+from .device_token import DeviceToken
 from .couple import Couple, CoupleMember, CoupleInvitation
 from .settlement import Settlement
 from .category import Category
@@ -15,6 +16,7 @@ __all__ = [
     "User", "RefreshToken",
     "AuthToken",
     "AuditLog",
+    "DeviceToken",
     "Couple", "CoupleMember", "CoupleInvitation",
     "Settlement",
     "Category",

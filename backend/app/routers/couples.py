@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from ..core.audit import record_audit
+from ..core.push import push_to_user
 from ..dependencies import get_db, get_current_user
 from ..models.user import User
 from ..models.couple import Couple, CoupleMember, CoupleInvitation
@@ -318,6 +319,15 @@ async def settle(
     )
     await db.commit()
     await db.refresh(settlement)
+
+    # Notifica al otro miembro que recibió un pago (best-effort).
+    monto_fmt = f"${body.monto:,.0f}".replace(",", ".")
+    await push_to_user(
+        db, other_id,
+        title="Liquidación recibida",
+        body=f"{current_user.full_name} te pagó {monto_fmt}",
+        data={"tipo": "liquidacion", "pareja_id": membership.pareja_id},
+    )
     return settlement
 
 

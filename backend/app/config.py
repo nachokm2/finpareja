@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_json: bool = True
 
+    # Notificaciones push (Firebase Cloud Messaging). Si está vacío, los envíos
+    # se registran en el log en vez de enviarse (modo dev / sin credenciales).
+    # Se espera el JSON COMPLETO de la cuenta de servicio de Firebase como string.
+    firebase_credentials: str = ""
+
     # CORS — se declara como STRING crudo (no list[str]) a propósito.
     # pydantic-settings intenta json.loads() sobre campos de tipo lista ANTES
     # de cualquier validador, y "*" o CSV no son JSON válido → crashea el arranque.
