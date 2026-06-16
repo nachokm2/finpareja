@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/core/ocr/receipt_scanner.dart';
 import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_app/core/utils/currency_formatter.dart';
 import 'package:flutter_app/features/categories/domain/entities/category_entity.dart';
@@ -28,8 +29,10 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
   CategoryEntity? _selectedCategory;
   late DateTime _fecha;
   bool _saving = false;
+  bool _scanning = false; // leyendo una boleta con la cámara (OCR)
   bool _compartir = false; // dividir el gasto con la pareja
   int _porcentajeUsuario = 50; // mi parte del gasto compartido (10..90)
+  late final TextEditingController _descCtrl;
 
   bool get _isEditing => widget.transaction != null;
 
@@ -48,6 +51,52 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
       _tipo = 'gasto';
       _monto = '0';
       _fecha = DateTime.now();
+    }
+    _descCtrl = TextEditingController(text: _descripcion ?? '');
+  }
+
+  @override
+  void dispose() {
+    _descCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Escanea una boleta con la cámara (OCR on-device) y prellena los campos.
+  /// El usuario siempre revisa el monto detectado antes de guardar.
+  Future<void> _scanReceipt() async {
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _scanning = true);
+    try {
+      final data = await ReceiptScanner().scanFromCamera();
+      if (!mounted) return;
+      if (data == null) {
+        setState(() => _scanning = false); // usuario canceló la cámara
+        return;
+      }
+      setState(() {
+        _scanning = false;
+        if (data.monto != null) {
+          _tipo = 'gasto';
+          _monto = data.monto!.toInt().toString();
+        }
+        if (data.fecha != null) _fecha = data.fecha!;
+        final descActual = _descCtrl.text.trim();
+        if (data.comercio != null && descActual.isEmpty) {
+          _descCtrl.text = data.comercio!;
+          _descripcion = data.comercio;
+        }
+      });
+      messenger.showSnackBar(SnackBar(
+        content: Text(data.monto != null
+            ? 'Monto detectado: revísalo antes de guardar'
+            : 'No detectamos el monto, ingrésalo manualmente'),
+      ));
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _scanning = false);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('No se pudo leer la boleta')),
+      );
     }
   }
 
@@ -128,6 +177,21 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
       appBar: AppBar(
         title: Text(_isEditing ? 'Editar transacción' : 'Nueva transacción'),
         actions: [
+          if (!_isEditing)
+            _scanning
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.document_scanner_outlined),
+                    tooltip: 'Escanear boleta',
+                    onPressed: _scanReceipt,
+                  ),
           if (_saving)
             const Padding(
               padding: EdgeInsets.all(16),
@@ -293,6 +357,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: TextField(
+              controller: _descCtrl,
               decoration: InputDecoration(
                 hintText: 'Descripcion (opcional)',
                 filled: true,
