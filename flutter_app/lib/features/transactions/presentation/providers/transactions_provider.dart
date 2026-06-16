@@ -1,4 +1,5 @@
 import 'package:flutter_app/core/network/dio_provider.dart';
+import 'package:flutter_app/features/recurring/presentation/providers/recurring_provider.dart';
 import 'package:flutter_app/features/transactions/data/datasources/transaction_remote_datasource.dart';
 import 'package:flutter_app/features/transactions/data/repositories/transaction_repository_impl.dart';
 import 'package:flutter_app/features/transactions/domain/entities/transaction_entity.dart';
@@ -26,6 +27,12 @@ class TransactionsNotifier extends AsyncNotifier<List<TransactionEntity>> {
     int? mes,
     int? anio,
   }) async {
+    // Materializa las transacciones recurrentes vencidas antes de listar
+    // (best-effort: un fallo aquí no debe impedir ver los movimientos).
+    try {
+      final recDs = await ref.read(recurringDsProvider.future);
+      await recDs.process();
+    } catch (_) {}
     final repo = await ref.read(_txRepoProvider.future);
     final now = DateTime.now();
     final result = await GetTransactionsUseCase(repo).call(

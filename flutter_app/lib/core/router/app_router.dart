@@ -13,6 +13,7 @@ import 'package:flutter_app/features/debts/presentation/pages/debts_page.dart';
 import 'package:flutter_app/features/home/presentation/pages/home_page.dart';
 import 'package:flutter_app/features/investments/presentation/pages/investments_page.dart';
 import 'package:flutter_app/features/legal/presentation/pages/privacy_policy_page.dart';
+import 'package:flutter_app/features/recurring/presentation/pages/recurring_page.dart';
 import 'package:flutter_app/features/reports/presentation/pages/reports_page.dart';
 import 'package:flutter_app/features/savings/presentation/pages/savings_page.dart';
 import 'package:flutter_app/features/transactions/presentation/pages/add_transaction_page.dart';
@@ -41,6 +42,7 @@ abstract class AppRoutes {
   static const investments = '/inversiones';
   static const couple = '/pareja';
   static const privacy = '/privacidad';
+  static const recurring = '/recurrentes';
 }
 
 /// Puente entre Riverpod y GoRouter.
@@ -122,6 +124,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.privacy,
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __) => const PrivacyPolicyPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.recurring,
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const RecurringPage(),
       ),
 
       // ── Shell con bottom navigation (4 ramas) ───────────────────────

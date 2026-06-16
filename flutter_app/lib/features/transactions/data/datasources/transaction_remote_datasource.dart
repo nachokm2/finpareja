@@ -43,4 +43,13 @@ class TransactionRemoteDataSource {
   Future<void> deleteTransaction(int id) async {
     await _dio.delete('/transacciones/$id');
   }
+
+  /// Descarga el CSV de todas las transacciones del usuario.
+  Future<String> exportCsv() async {
+    final resp = await _dio.get<String>(
+      '/transacciones/export',
+      options: Options(responseType: ResponseType.plain),
+    );
+    return resp.data ?? '';
+  }
 }
