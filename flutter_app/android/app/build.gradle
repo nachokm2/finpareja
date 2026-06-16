@@ -41,3 +41,14 @@ android {
 flutter {
     source = "../.."
 }
+
+// image_picker arrastra AndroidX muy nuevos (core 1.18, activity 1.12) que exigen
+// AGP 8.9.1+. Fijamos versiones compatibles con el AGP actual (8.6.1) para no
+// tener que subir toda la cadena de herramientas.
+configurations.all {
+    resolutionStrategy {
+        force "androidx.core:core:1.13.1"
+        force "androidx.core:core-ktx:1.13.1"
+        force "androidx.activity:activity:1.9.3"
+    }
+}
