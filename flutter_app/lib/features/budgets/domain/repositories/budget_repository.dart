@@ -11,5 +11,10 @@ abstract class BudgetRepository {
     int? anio,
     double alertaPorcentaje = 80,
   });
+  Future<Either<Failure, void>> updateBudget({
+    required int id,
+    double? montoLimite,
+    double? alertaPorcentaje,
+  });
   Future<Either<Failure, void>> deleteBudget(int id);
 }

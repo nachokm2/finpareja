@@ -18,5 +18,10 @@ class BudgetRemoteDataSource {
     return BudgetModel.fromJson(resp.data as Map<String, dynamic>);
   }
 
+  Future<BudgetModel> updateBudget(int id, Map<String, dynamic> body) async {
+    final resp = await _dio.patch('/presupuestos/$id', data: body);
+    return BudgetModel.fromJson(resp.data as Map<String, dynamic>);
+  }
+
   Future<void> deleteBudget(int id) async => _dio.delete('/presupuestos/$id');
 }

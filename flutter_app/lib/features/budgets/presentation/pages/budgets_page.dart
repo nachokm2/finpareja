@@ -322,15 +322,33 @@ class _BudgetCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                nombreCategoria,
-                style: const TextStyle(fontWeight: FontWeight.w600),
+              Expanded(
+                child: Text(
+                  nombreCategoria,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
               Text(
                 '${budget.porcentajeUsado.toStringAsFixed(0)}%',
                 style: TextStyle(color: color, fontWeight: FontWeight.w700),
+              ),
+              SizedBox(
+                height: 28,
+                child: PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert,
+                      size: 18, color: Colors.grey),
+                  padding: EdgeInsets.zero,
+                  tooltip: 'Opciones',
+                  onSelected: (v) {
+                    if (v == 'edit') _showEdit(context, ref);
+                    if (v == 'delete') _confirmDelete(context, ref);
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem(value: 'edit', child: Text('Editar')),
+                    PopupMenuItem(value: 'delete', child: Text('Eliminar')),
+                  ],
+                ),
               ),
             ],
           ),
@@ -361,5 +379,109 @@ class _BudgetCard extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _showEdit(BuildContext context, WidgetRef ref) {
+    final montoCtrl =
+        TextEditingController(text: budget.montoLimite.toInt().toString());
+    double alerta = budget.alertaPorcentaje.clamp(50, 95).toDouble();
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom +
+                MediaQuery.of(ctx).viewPadding.bottom +
+                16,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Editar presupuesto',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: montoCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Monto límite mensual',
+                  prefixText: '\$ ',
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('Avisarme al ${alerta.round()}% del límite',
+                  style: const TextStyle(color: Colors.grey)),
+              Slider(
+                value: alerta,
+                min: 50,
+                max: 95,
+                divisions: 9,
+                label: '${alerta.round()}%',
+                onChanged: (v) => setSheet(() => alerta = v),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final monto = double.tryParse(montoCtrl.text);
+                    if (monto == null || monto <= 0) return;
+                    Navigator.pop(ctx);
+                    final ok = await ref.read(budgetsProvider.notifier).edit(
+                          id: budget.id,
+                          montoLimite: monto,
+                          alertaPorcentaje: alerta,
+                        );
+                    if (!ok && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('No se pudo actualizar')),
+                      );
+                    }
+                  },
+                  child: const Text('Guardar cambios'),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Eliminar presupuesto'),
+        content: const Text(
+            'Se eliminará este presupuesto. No afecta tus transacciones.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await ref.read(budgetsProvider.notifier).delete(budget.id);
+    }
   }
 }

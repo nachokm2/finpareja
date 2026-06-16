@@ -41,4 +41,30 @@ class BudgetsNotifier extends AsyncNotifier<List<BudgetEntity>> {
       return true;
     });
   }
+
+  Future<bool> edit({
+    required int id,
+    double? montoLimite,
+    double? alertaPorcentaje,
+  }) async {
+    final repo = await ref.read(_budgetRepoProvider.future);
+    final result = await repo.updateBudget(
+      id: id, montoLimite: montoLimite, alertaPorcentaje: alertaPorcentaje,
+    );
+    if (result.isRight()) {
+      await refresh(); // recalcula uso/alerta con los nuevos valores
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> delete(int id) async {
+    final repo = await ref.read(_budgetRepoProvider.future);
+    final result = await repo.deleteBudget(id);
+    if (result.isRight()) {
+      await refresh();
+      return true;
+    }
+    return false;
+  }
 }

@@ -36,6 +36,22 @@ class BudgetRepositoryImpl implements BudgetRepository {
   }
 
   @override
+  Future<Either<Failure, void>> updateBudget({
+    required int id,
+    double? montoLimite,
+    double? alertaPorcentaje,
+  }) async {
+    try {
+      await _remote.updateBudget(id, {
+        if (montoLimite != null) 'monto_limite': montoLimite,
+        if (alertaPorcentaje != null) 'alerta_porcentaje': alertaPorcentaje,
+      });
+      return const Right(null);
+    } on DioException catch (e) { return Left(_map(e)); }
+    catch (e) { return Left(UnknownFailure(e.toString())); }
+  }
+
+  @override
   Future<Either<Failure, void>> deleteBudget(int id) async {
     try {
       await _remote.deleteBudget(id);
