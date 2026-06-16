@@ -28,7 +28,8 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
   CategoryEntity? _selectedCategory;
   late DateTime _fecha;
   bool _saving = false;
-  bool _compartir = false; // dividir 50/50 con la pareja
+  bool _compartir = false; // dividir el gasto con la pareja
+  int _porcentajeUsuario = 50; // mi parte del gasto compartido (10..90)
 
   bool get _isEditing => widget.transaction != null;
 
@@ -100,7 +101,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
             descripcion: _descripcion,
             categoriaId: _selectedCategory?.id,
             esCompartido: compartir && parejaId != null,
-            porcentajeUsuario: compartir ? 50 : 100,
+            porcentajeUsuario: compartir ? _porcentajeUsuario.toDouble() : 100,
             parejaId: compartir ? parejaId : null,
           );
     if (!mounted) return;
@@ -318,12 +319,56 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            child: SwitchListTile(
-                              value: _compartir,
-                              onChanged: (v) => setState(() => _compartir = v),
-                              title: const Text('Dividir con mi pareja'),
-                              subtitle: const Text('50/50 — la otra mitad queda como deuda'),
-                              secondary: const Icon(Icons.people_alt_outlined),
+                            child: Column(
+                              children: [
+                                SwitchListTile(
+                                  value: _compartir,
+                                  onChanged: (v) =>
+                                      setState(() => _compartir = v),
+                                  title: const Text('Dividir con mi pareja'),
+                                  subtitle: Text(_compartir
+                                      ? 'Tú $_porcentajeUsuario% · tu pareja debe ${100 - _porcentajeUsuario}%'
+                                      : 'Divide el gasto y registra la deuda'),
+                                  secondary:
+                                      const Icon(Icons.people_alt_outlined),
+                                ),
+                                if (_compartir)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        16, 0, 16, 8),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text('Tú $_porcentajeUsuario%',
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.w700)),
+                                            Text(
+                                                'Pareja ${100 - _porcentajeUsuario}%',
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.w700,
+                                                    color: Color(0xFFEF4444))),
+                                          ],
+                                        ),
+                                        Slider(
+                                          value: _porcentajeUsuario.toDouble(),
+                                          min: 10,
+                                          max: 90,
+                                          divisions: 8,
+                                          label: '$_porcentajeUsuario%',
+                                          onChanged: (v) => setState(() =>
+                                              _porcentajeUsuario = v.round()),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ),
