@@ -1,0 +1,23 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Solo el corazon + linea, escalado y centrado para la zona segura del
+       icono adaptativo de Android (el fondo lo pone el launcher). -->
+  <g transform="translate(256,256) scale(0.62) translate(-256,-226)">
+    <path
+      d="M256 356
+         C180 300 128 250 128 180
+         C128 130 165 96 212 96
+         C236 96 250 105 256 120
+         C262 105 276 96 300 96
+         C347 96 384 130 384 180
+         C384 250 332 300 256 356Z"
+      fill="white"/>
+    <path
+      d="M170 250 L215 220 L250 240 L295 185 L340 145"
+      stroke="#10B981" stroke-width="18"
+      stroke-linecap="round" stroke-linejoin="round"/>
+    <path
+      d="M318 145 L340 145 L340 167"
+      stroke="#10B981" stroke-width="18"
+      stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

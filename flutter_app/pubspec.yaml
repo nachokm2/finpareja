@@ -34,6 +34,16 @@ dev_dependencies:
   build_runner: ^2.4.0
   json_serializable: ^6.7.0
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.1
+
+# Ícono de la app (logo: corazón + línea de crecimiento). Genera los mipmaps de
+# Android y el ícono adaptativo. Regenerar: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#2563EB"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
 
 flutter:
   # Empaqueta la fuente MaterialIcons (Icons.*). Sin esto los íconos
