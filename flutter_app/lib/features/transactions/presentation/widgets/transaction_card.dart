@@ -25,6 +25,28 @@ class TransactionCard extends StatelessWidget {
     return Dismissible(
       key: Key('tx_${transaction.id}'),
       direction: DismissDirection.endToStart,
+      // Pide confirmación antes de borrar; si se cancela, la tarjeta vuelve.
+      confirmDismiss: (_) async {
+        final ok = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(isGasto ? '¿Eliminar gasto?' : '¿Eliminar ingreso?'),
+            content: const Text('Esta acción no se puede deshacer.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Eliminar',
+                    style: TextStyle(color: AppColors.danger)),
+              ),
+            ],
+          ),
+        );
+        return ok ?? false;
+      },
       onDismissed: (_) => onDelete?.call(),
       background: Container(
         alignment: Alignment.centerRight,

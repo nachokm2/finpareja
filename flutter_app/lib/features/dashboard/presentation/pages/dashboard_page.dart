@@ -150,7 +150,7 @@ class _BalanceCard extends StatelessWidget {
                 child: _StatChip(
                   label: 'Ingresos',
                   value: CurrencyFormatter.format(summary.ingresos),
-                  icon: '↑',
+                  icon: Icons.arrow_upward_rounded,
                   color: AppColors.success,
                 ),
               ),
@@ -159,7 +159,7 @@ class _BalanceCard extends StatelessWidget {
                 child: _StatChip(
                   label: 'Gastos',
                   value: CurrencyFormatter.format(summary.gastos),
-                  icon: '↓',
+                  icon: Icons.arrow_downward_rounded,
                   color: const Color(0xFFEF4444),
                 ),
               ),
@@ -180,7 +180,7 @@ class _StatChip extends StatelessWidget {
   });
   final String label;
   final String value;
-  final String icon;
+  final IconData icon;
   final Color color;
 
   @override
@@ -196,8 +196,16 @@ class _StatChip extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(icon, style: TextStyle(color: color, fontWeight: FontWeight.w700)),
-              const SizedBox(width: 4),
+              // Badge circular con la flecha, más visible que el texto ↑/↓.
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: color.withAlpha(45),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 18),
+              ),
+              const SizedBox(width: 6),
               Text(label,
                   style: const TextStyle(color: Colors.white70, fontSize: 11)),
             ],
