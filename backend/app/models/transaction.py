@@ -22,6 +22,10 @@ class Transaction(Base):
     categoria_id: Mapped[int | None] = mapped_column(
         ForeignKey("categorias.id"), nullable=True
     )
+    # Tarjeta con la que se pagó el gasto (opcional, para control de tarjetas).
+    tarjeta_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tarjetas_credito.id"), nullable=True
+    )
     tipo: Mapped[str] = mapped_column(String(10), nullable=False)  # 'ingreso' | 'gasto'
     monto: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
     moneda: Mapped[str] = mapped_column(String(3), default="CLP", nullable=False)

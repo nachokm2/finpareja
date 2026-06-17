@@ -7,6 +7,7 @@ from .settlement import Settlement
 from .category import Category
 from .transaction import Transaction
 from .recurring_transaction import RecurringTransaction
+from .credit_card import CreditCard, CardPurchase, CardPayment
 from .budget import Budget
 from .saving_goal import SavingGoal, SavingGoalContribution
 from .debt import Debt, DebtPayment
@@ -22,6 +23,7 @@ __all__ = [
     "Category",
     "Transaction",
     "RecurringTransaction",
+    "CreditCard", "CardPurchase", "CardPayment",
     "Budget",
     "SavingGoal", "SavingGoalContribution",
     "Debt", "DebtPayment",

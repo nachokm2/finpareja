@@ -12,6 +12,7 @@ from ..dependencies import get_db, get_current_user, assert_couple_member
 from ..models.user import User
 from ..models.budget import Budget
 from ..models.couple import CoupleMember
+from ..models.credit_card import CreditCard, CardPurchase
 from ..models.transaction import Transaction
 from ..schemas.transaction import (
     TransactionCreate,
@@ -154,11 +155,32 @@ async def create_transaction(
     db: AsyncSession = Depends(get_db),
 ):
     await assert_couple_member(db, current_user.id, body.pareja_id)
+    if body.tarjeta_id is not None:
+        card = await db.get(CreditCard, body.tarjeta_id)
+        if card is None or card.usuario_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Tarjeta no válida")
+
     tx = Transaction(
         usuario_id=current_user.id,
         **body.model_dump(),
     )
     db.add(tx)
+    await db.flush()
+
+    # Gasto pagado con tarjeta → registra una compra al contado vinculada, para
+    # que sume a la deuda de la tarjeta (control financiero).
+    if body.tarjeta_id is not None and tx.tipo == "gasto":
+        db.add(CardPurchase(
+            tarjeta_id=body.tarjeta_id,
+            usuario_id=current_user.id,
+            descripcion=tx.descripcion,
+            monto=tx.monto,
+            fecha=tx.fecha,
+            categoria_id=tx.categoria_id,
+            cuotas=1,
+            transaction_id=tx.id,
+        ))
+
     await db.commit()
     await db.refresh(tx)
 

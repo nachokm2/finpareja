@@ -16,6 +16,7 @@ class TransactionCreate(BaseModel):
     frecuencia: str | None = None
     notas: str | None = None
     pareja_id: int | None = None
+    tarjeta_id: int | None = None
 
     @field_validator("tipo")
     @classmethod
@@ -62,6 +63,7 @@ class TransactionResponse(BaseModel):
     descripcion: str | None
     fecha: date
     categoria_id: int | None
+    tarjeta_id: int | None = None
     category: CategorySummary | None = None
     es_compartido: bool
     porcentaje_usuario: Decimal
