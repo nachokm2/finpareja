@@ -7,6 +7,7 @@ import 'package:flutter_app/features/auth/presentation/pages/login_page.dart';
 import 'package:flutter_app/features/auth/presentation/pages/register_page.dart';
 import 'package:flutter_app/features/auth/presentation/pages/splash_page.dart';
 import 'package:flutter_app/features/budgets/presentation/pages/budgets_page.dart';
+import 'package:flutter_app/features/cards/presentation/pages/cards_page.dart';
 import 'package:flutter_app/features/couple/presentation/pages/couple_page.dart';
 import 'package:flutter_app/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:flutter_app/features/debts/presentation/pages/debts_page.dart';
@@ -43,6 +44,7 @@ abstract class AppRoutes {
   static const couple = '/pareja';
   static const privacy = '/privacidad';
   static const recurring = '/recurrentes';
+  static const cards = '/tarjetas';
 }
 
 /// Puente entre Riverpod y GoRouter.
@@ -129,6 +131,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.recurring,
         parentNavigatorKey: _rootNavigatorKey,
         builder: (_, __) => const RecurringPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.cards,
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const CardsPage(),
       ),
 
       // ── Shell con bottom navigation (4 ramas) ───────────────────────

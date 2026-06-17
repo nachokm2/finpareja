@@ -3,6 +3,7 @@ import 'package:flutter_app/core/ocr/receipt_scanner.dart';
 import 'package:flutter_app/core/security/biometric_service.dart';
 import 'package:flutter_app/core/theme/app_theme.dart';
 import 'package:flutter_app/core/utils/currency_formatter.dart';
+import 'package:flutter_app/features/cards/presentation/providers/cards_provider.dart';
 import 'package:flutter_app/features/categories/domain/entities/category_entity.dart';
 import 'package:flutter_app/features/categories/presentation/providers/categories_provider.dart';
 import 'package:flutter_app/features/couple/presentation/providers/couple_provider.dart';
@@ -33,6 +34,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
   bool _scanning = false; // leyendo una boleta con la cámara (OCR)
   bool _compartir = false; // dividir el gasto con la pareja
   int _porcentajeUsuario = 50; // mi parte del gasto compartido (10..90)
+  int? _tarjetaId; // tarjeta con la que se pagó el gasto (opcional)
   late final TextEditingController _descCtrl;
 
   bool get _isEditing => widget.transaction != null;
@@ -288,6 +290,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
             esCompartido: compartir && parejaId != null,
             porcentajeUsuario: compartir ? _porcentajeUsuario.toDouble() : 100,
             parejaId: compartir ? parejaId : null,
+            tarjetaId: _tipo == 'gasto' ? _tarjetaId : null,
           );
     if (!mounted) return;
     setState(() => _saving = false);
@@ -573,6 +576,61 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                             ),
                           ),
                         ),
+                  orElse: () => const SizedBox.shrink(),
+                ),
+
+          // Pagar con tarjeta: solo en gastos y si el usuario tiene tarjetas.
+          if (_tipo == 'gasto' && !_isEditing)
+            ref.watch(cardsProvider).maybeWhen(
+                  data: (cards) {
+                    if (cards.isEmpty) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 4),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(Icons.credit_card,
+                                    size: 18, color: AppColors.primary),
+                                SizedBox(width: 8),
+                                Text('Pagar con tarjeta',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                ChoiceChip(
+                                  label: const Text('Sin tarjeta'),
+                                  selected: _tarjetaId == null,
+                                  onSelected: (_) =>
+                                      setState(() => _tarjetaId = null),
+                                ),
+                                ...cards.map((c) => ChoiceChip(
+                                      label: Text(c.nombre),
+                                      selected: _tarjetaId == c.id,
+                                      onSelected: (_) =>
+                                          setState(() => _tarjetaId = c.id),
+                                    )),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                   orElse: () => const SizedBox.shrink(),
                 ),
 

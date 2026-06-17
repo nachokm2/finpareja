@@ -58,6 +58,7 @@ class TransactionsNotifier extends AsyncNotifier<List<TransactionEntity>> {
     bool esCompartido = false,
     double porcentajeUsuario = 100,
     int? parejaId,
+    int? tarjetaId,
   }) async {
     final repo = await ref.read(_txRepoProvider.future);
     final result = await repo.createTransaction(
@@ -70,6 +71,7 @@ class TransactionsNotifier extends AsyncNotifier<List<TransactionEntity>> {
       esCompartido: esCompartido,
       porcentajeUsuario: porcentajeUsuario,
       parejaId: parejaId,
+      tarjetaId: tarjetaId,
     );
     return result.fold(
       (f) => false,

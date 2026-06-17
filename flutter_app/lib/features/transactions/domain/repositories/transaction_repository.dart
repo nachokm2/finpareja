@@ -20,6 +20,7 @@ abstract class TransactionRepository {
     bool esCompartido = false,
     double porcentajeUsuario = 100,
     int? parejaId,
+    int? tarjetaId,
     String moneda = 'CLP',
     String? notas,
   });

@@ -335,6 +335,12 @@ class _QuickAccessRow extends StatelessWidget {
           color: AppColors.expense,
         ),
         _QuickAccessItem(
+          icon: Icons.account_balance_wallet_rounded,
+          label: 'Tarjetas',
+          route: '/tarjetas',
+          color: Color(0xFF6C5CE7),
+        ),
+        _QuickAccessItem(
           icon: Icons.trending_up_rounded,
           label: 'Inversiones',
           route: '/inversiones',
@@ -383,7 +389,10 @@ class _QuickAccessItem extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               label,
-              style: const TextStyle(fontSize: 11, color: Colors.black54),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 10, color: Colors.black54),
             ),
           ],
         ),

@@ -20,6 +20,7 @@ class TransactionModel extends TransactionEntity {
     super.notas,
     super.frecuencia,
     super.parejaId,
+    super.tarjetaId,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
@@ -40,6 +41,7 @@ class TransactionModel extends TransactionEntity {
       frecuencia: json['frecuencia'] as String?,
       notas: json['notas'] as String?,
       parejaId: json['pareja_id'] as int?,
+      tarjetaId: json['tarjeta_id'] as int?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -57,5 +59,6 @@ class TransactionModel extends TransactionEntity {
         'recurrente': recurrente,
         if (notas != null) 'notas': notas,
         if (parejaId != null) 'pareja_id': parejaId,
+        if (tarjetaId != null) 'tarjeta_id': tarjetaId,
       };
 }
